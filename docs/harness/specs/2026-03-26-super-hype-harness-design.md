@@ -133,6 +133,7 @@ docs/harness/
 | Phase | Skill | 출처 | 역할 |
 |-------|-------|------|------|
 | 기획 | `harness-brainstorm` | harness | office-hours 패턴 + 앱 기획 특화 질문 프레임워크 |
+| 기획 | `tech-decision` | dev 플러그인 | 기술 스택 결정 시 체계적 분석 (brainstorm Phase 3에서 호출) |
 | 리뷰 | `plan-ceo-review` | gstack | 범위/야심/전략 도전 |
 | 리뷰 | `plan-design-review` | gstack | UI/UX 디자인 리뷰 (app_type: web일 때) |
 | 리뷰 | `plan-eng-review` | gstack | 아키텍처/테스트/보안 검증 |

@@ -25,8 +25,27 @@ Ask questions ONE AT A TIME. Prefer multiple choice when possible.
 Follow the 4-phase framework from `references/question-framework.md`:
 1. Vision (What & Why) -- understand the core problem
 2. Scope -- define MVP boundaries
-3. Tech Decisions -- lock in the stack
+3. Tech Decisions -- use `/tech-decision` skill if available (see below)
 4. UX Flow -- map the user journey
+
+### Phase 3: Tech Decisions with /tech-decision
+
+If the `dev:tech-decision` skill is available (from the dev plugin), invoke it for Phase 3 instead of asking simple multiple choice questions. This provides systematic multi-source research with tradeoff analysis.
+
+**When available:**
+1. Summarize the vision and scope from Phases 1-2
+2. Invoke `/tech-decision` with the context: "Given [app description] with [scope], recommend the tech stack: frontend, backend, database, deployment"
+3. Present the `/tech-decision` results to the user
+4. Let the user accept, modify, or override recommendations
+5. Lock in the final stack
+
+**When NOT available (fallback):**
+Ask simple multiple choice questions as defined in `references/question-framework.md` Phase 3:
+- Frontend: React / Vue / Svelte / other
+- Backend: Express / FastAPI / Next.js / other
+- Database: SQLite / PostgreSQL / none
+- Deployment: Vercel / local / other
+- External APIs needed?
 
 ### Office-Hours Behaviors
 
