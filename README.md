@@ -42,6 +42,35 @@ claude plugins install github:jaewon/super-hype-harness
 Each phase runs in an isolated Agent subprocess (context reset).
 Rate limit auto-resume keeps the pipeline running across sessions.
 
+## Skills Reference
+
+| Skill | Type | Description |
+|-------|------|-------------|
+| `/harness` | user-invoked | Main orchestrator. Start a new pipeline or resume. |
+| `/harness-status` | user-invoked | Display pipeline progress. |
+| `harness-brainstorm` | model-invoked | Interactive app planning (office-hours style) |
+| `harness-planner` | model-invoked | Spec to sprint decomposition |
+| `harness-contract` | model-invoked | Sprint contract negotiation |
+| `harness-generator` | model-invoked | Code implementation agent |
+| `harness-evaluator` | model-invoked | Independent QA (read-only, skeptical) |
+| `harness-qa` | model-invoked | Final QA (browser/CLI/library) |
+| `harness-resume` | internal | Resume from rate limit or self-reset |
+
+## Configuration
+
+The pipeline creates `docs/harness/config.md` with these defaults:
+
+```yaml
+auto_resume: true              # Auto-resume after rate limit (default: on)
+generator: default             # Generator profile (generators/<name>/SKILL.md)
+evaluator: default             # Evaluator profile (evaluators/<name>/SKILL.md)
+browser_evaluator: browser-qa  # Browser QA profile (web apps)
+self_reset_interval: 3         # Orchestrator resets every N sprints
+max_retries: 3                 # Max retries per sprint before pivot
+max_pivots: 2                  # Max pivots per sprint before escalate
+app_type: web                  # web | cli | library
+```
+
 ## Extending
 
 Add custom generators in `generators/` and evaluators in `evaluators/`.
