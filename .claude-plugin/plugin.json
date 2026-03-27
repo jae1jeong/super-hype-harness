@@ -5,7 +5,7 @@
   "author": {
     "name": "jaewon"
   },
-  "repository": "https://github.com/jaewon/super-hype-harness",
+  "repository": "https://github.com/jae1jeong/super-hype-harness",
   "license": "MIT",
   "keywords": ["harness", "pipeline", "long-running", "generator", "evaluator", "orchestration"],
   "hooks": {

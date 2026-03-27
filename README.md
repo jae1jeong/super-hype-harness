@@ -10,7 +10,7 @@ Inspired by [Anthropic's Harness Design for Long-Running Apps](https://www.anthr
 
 ```bash
 # 1. Add marketplace
-claude plugins marketplace add jaewon/super-hype-harness
+claude plugins marketplace add jae1jeong/super-hype-harness
 
 # 2. Install plugin
 claude plugins install super-hype-harness@super-hype-harness
