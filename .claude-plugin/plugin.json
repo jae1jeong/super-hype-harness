@@ -7,5 +7,18 @@
   },
   "repository": "https://github.com/jaewon/super-hype-harness",
   "license": "MIT",
-  "keywords": ["harness", "pipeline", "long-running", "generator", "evaluator", "orchestration"]
+  "keywords": ["harness", "pipeline", "long-running", "generator", "evaluator", "orchestration"],
+  "hooks": {
+    "StopFailure": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/stop-failure-handler.sh"
+          }
+        ]
+      }
+    ]
+  }
 }

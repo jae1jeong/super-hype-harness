@@ -74,6 +74,18 @@ max_pivots: 2                  # Max pivots per sprint before escalate
 app_type: web                  # web | cli | library
 ```
 
+## Codex CLI Support
+
+This plugin also works with [OpenAI Codex CLI](https://developers.openai.com/codex/cli) via `AGENTS.md`.
+
+```bash
+# Symlink skills for Codex
+cd your-project
+ln -s path/to/super-hype-harness/skills .agents/skills
+```
+
+See `AGENTS.md` for details.
+
 ## Extending
 
 Add custom generators in `generators/` and evaluators in `evaluators/`.
