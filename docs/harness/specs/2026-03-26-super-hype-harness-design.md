@@ -130,31 +130,29 @@ docs/harness/
 
 ### 2.1 Skill 출처 매핑
 
-| Phase | Skill | 출처 | 역할 |
-|-------|-------|------|------|
-| 기획 | `harness-brainstorm` | harness | office-hours 패턴 + 앱 기획 특화 질문 프레임워크 |
-| 기획 | `tech-decision` | dev 플러그인 | 기술 스택 결정 시 체계적 분석 (brainstorm Phase 3에서 호출) |
-| 리뷰 | `plan-ceo-review` | gstack | 범위/야심/전략 도전 |
-| 리뷰 | `plan-design-review` | gstack | UI/UX 디자인 리뷰 (app_type: web일 때) |
-| 리뷰 | `plan-eng-review` | gstack | 아키텍처/테스트/보안 검증 |
-| 구현 | `harness-planner` | harness | 스펙 → 스프린트 분해 |
-| 구현 | `harness-contract` | harness | Done 정의 자동 협상 |
-| 구현 | `harness-generator` | harness | 코드 구현 |
-| 구현 | `harness-evaluator` | harness | GAN 영감 독립 검증 |
-| 구현 | `review` | gstack | Sprint별 코드 리뷰 + auto-fix |
-| 디버깅 | `investigate` | gstack | 평가 실패 시 root cause 분석 |
-| 검증 | verification-before-completion | superpowers | 완료 주장 전 증거 확인 |
-| QA | `harness-qa` | harness | agent-browser 기반 브라우저 QA |
-| 배포 | `ship` | gstack | PR 생성 + 배포 |
+All patterns are internalized — no external plugins required. Patterns adapted from [gstack](https://github.com/garrytan/gstack), [superpowers](https://github.com/obra/superpowers), and [dev plugin](https://github.com/anthropics/team-attention-plugins).
 
-### 2.2 Superpowers 패턴 차용
+| Phase | Skill | 역할 | 원래 영감 |
+|-------|-------|------|----------|
+| 기획 | `harness-brainstorm` | office-hours 스타일 질문 + 구조화된 기술 스택 비교 | gstack office-hours, dev tech-decision |
+| 리뷰 | 오케스트레이터 내재화 | CEO 리뷰 (범위/야심), 디자인 리뷰 (web), Eng 리뷰 (아키텍처/보안) | gstack plan-ceo/eng/design-review |
+| 구현 | `harness-planner` | 스펙 → 스프린트 분해 | — |
+| 구현 | `harness-contract` | Done 정의 자동 협상 | Anthropic harness sprint contract |
+| 구현 | `harness-generator` | 코드 구현 + verification-before-completion | superpowers verification |
+| 구현 | `harness-evaluator` | GAN 영감 독립 검증 (read-only) | Anthropic harness evaluator |
+| 디버깅 | 오케스트레이터 내재화 | 4단계 systematic debugging | gstack investigate, superpowers systematic-debugging |
+| QA | `harness-qa` | app_type별 QA (browser/cli/library) | — |
+| 배포 | 오케스트레이터 내재화 | 테스트 실행 + `gh pr create` | gstack ship |
 
-harness 자체 skill에 superpowers의 핵심 패턴을 내재화:
+### 2.2 내재화된 패턴 (외부 종속성 없음)
 
-- **verification-before-completion:** Generator가 "구현 완료"를 주장하기 전 반드시 테스트/빌드 증거 확인. Evaluator도 PASS 판정 전 실제 검증 증거 필수.
-- **systematic-debugging:** Evaluator가 FAIL 판정 시, Generator가 바로 수정하지 않고 4단계 디버깅(조사→분석→가설→구현) 수행. 3회 이상 실패하면 접근법 자체를 재고.
-- **HARD-GATE 패턴:** Phase 간 전이에 hard gate 적용. brainstorm 완료 전 구현 불가, plan 리뷰 통과 전 sprint 시작 불가.
-- **checklist-driven workflow:** 각 skill이 명시적 체크리스트를 가지고, 완료 상태를 추적.
+모든 패턴이 harness 자체 SKILL.md에 내재화되어 독립 동작:
+
+- **verification-before-completion** (from superpowers): Generator가 "구현 완료"를 주장하기 전 반드시 테스트/빌드 증거 확인. Evaluator도 PASS 판정 전 실제 검증 증거 필수.
+- **systematic-debugging** (from gstack investigate + superpowers): Evaluator FAIL 정체 시 4단계 디버깅(증상 수집→가설→최소 테스트→수정) 수행.
+- **HARD-GATE 패턴** (from superpowers): Phase 간 전이에 hard gate 적용. brainstorm 완료 전 구현 불가, 리뷰 통과 전 sprint 시작 불가.
+- **checklist-driven review** (from gstack plan-*-review): CEO/Eng/Design 리뷰를 체크리스트 기반으로 내재화.
+- **structured tech comparison** (from dev tech-decision): 기술 스택 결정 시 2-3개 옵션 비교 + 추천.
 
 ### 2.3 오케스트레이터 자동 판단
 
@@ -642,29 +640,15 @@ evaluator: api-test        # evaluators/api-test/SKILL.md
 
 ### 5.2 gstack/superpowers 의존성
 
-| 의존성 | 필수 여부 | 없을 때 동작 |
-|--------|----------|-------------|
-| gstack | 선택 | plan-ceo-review, plan-eng-review, review, ship 스킵. harness 자체 skill로 대체. |
-| superpowers | 선택 | 패턴만 내재화되어 있으므로 독립 동작 가능. |
-| agent-browser | 선택 | 브라우저 QA 스킵. 코드 리뷰만으로 평가. |
+**완전 독립 동작 — 외부 플러그인 불필요:**
 
-**gstack 없이 동작하는 fallback:**
+| 의존성 | 필수 여부 | 설명 |
+|--------|----------|------|
+| Claude Code | 필수 | 최신 버전 |
+| `gh` CLI | 필수 | Ship phase에서 PR 생성 |
+| agent-browser | 선택 | 웹앱 브라우저 QA (없으면 빌드/테스트 검증으로 대체) |
 
-| gstack skill | fallback 동작 | 최소 보장 |
-|-------------|--------------|----------|
-| plan-ceo-review | 체크리스트 기반 범위 리뷰: MVP 적절성, 기능 과부족, 기술 실현성 | 범위 적절성 판단 |
-| plan-design-review | 스킵 (코드 리뷰에서 UI 일관성만 체크) | 기본 UI 검증 |
-| plan-eng-review | 체크리스트 기반 기술 리뷰: 데이터 모델, API 설계, 에러 처리, 보안 | 아키텍처 검증 |
-| review | evaluator가 코드 리뷰도 담당 (allowed-tools에 Read 포함) | 코드 품질 검증 |
-| investigate | systematic-debugging 패턴 내재화로 Generator가 자체 디버깅 | root cause 분석 |
-| ship | 기본 Git 커밋 + `gh pr create` | PR 생성 |
-
-**fallback 모드 알림:** gstack 미설치 시 파이프라인 시작 전 경고 표시:
-```
-[harness] gstack 미설치 — fallback 모드로 실행됩니다.
-plan-ceo-review, plan-eng-review, review, ship이 간소화됩니다.
-전체 기능을 사용하려면: claude plugins install github:garrytan/gstack
-```
+gstack, superpowers, dev 플러그인의 패턴은 모두 내재화됨. fallback 로직 없이 모든 기능이 자체 구현.
 
 ---
 
