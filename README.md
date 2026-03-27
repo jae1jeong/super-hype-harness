@@ -4,6 +4,8 @@ Long-running app development harness for Claude Code. One command takes you from
 
 Inspired by [Anthropic's Harness Design for Long-Running Apps](https://www.anthropic.com/engineering/harness-design-long-running-apps).
 
+[한국어](./README.ko.md)
+
 ## Install
 
 ```bash
