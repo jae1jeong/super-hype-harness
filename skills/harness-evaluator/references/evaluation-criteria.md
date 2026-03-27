@@ -21,7 +21,7 @@ PIVOT count exceeds max_pivots. Issue is logged and sprint is skipped.
 ## Trend Detection
 Compare FAIL item count across last 2 iterations of the same sprint:
 - Decreasing: continue with incremental improvement
-- Same or increasing: signal for root cause investigation (invoke investigate skill if available)
+- Same or increasing: signal for root cause investigation (orchestrator triggers systematic debugging)
 
 ## Scoring (Advisory)
 Rate overall quality 1-10 as a reference metric. This does NOT affect PASS/RETRY/PIVOT judgment.
