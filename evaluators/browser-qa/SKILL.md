@@ -14,26 +14,33 @@ Supplements the default evaluator with browser-based verification for web apps.
 ## How to invoke agent-browser
 
 ```bash
-# Install if needed
-npm install -g @anthropic-ai/agent-browser
+# Install (one-time)
+npm install -g agent-browser
+agent-browser install    # Downloads Chrome
 
-# Run against localhost
-npx @anthropic-ai/agent-browser --url http://localhost:PORT
+# Core commands
+agent-browser open http://localhost:PORT    # Open URL
+agent-browser snapshot                      # Get page structure with element refs (@e1, @e2...)
+agent-browser click "@e1"                   # Click element by ref
+agent-browser fill "@e3" "test input"       # Fill form field
+agent-browser screenshot                    # Capture evidence
+agent-browser console                       # Check for JS errors
+agent-browser close                         # Close browser
 ```
 
-If agent-browser is not installed, the evaluator falls back to curl-based checks and notes the limitation in feedback.
-
 ## Process
-1. Start dev server if not running (`npm run dev &` or project-specific command)
-2. Poll `curl -s -o /dev/null -w "%{http_code}" http://localhost:PORT` until 200 (max 30s)
-3. Launch agent-browser pointing to localhost
-4. For each contract criterion with type "browser":
-   a. Navigate to the relevant page
-   b. Interact with elements as specified (click, fill, submit)
-   c. Verify expected state/content
-   d. Check browser console for errors
-   e. Capture screenshot as evidence
-5. Stop dev server (kill by PID)
+1. Start dev server if not running (project-specific command)
+2. Wait for server ready (poll with curl until 200, max 30s)
+3. Use agent-browser to test:
+   a. `agent-browser open http://localhost:PORT` -- open the app
+   b. `agent-browser snapshot` -- see page structure and element refs
+   c. For each contract criterion with type "browser":
+      - Navigate to the relevant page
+      - Interact: `click`, `fill`, `type`, `hover` by element ref
+      - Verify: take snapshot, check expected content/state
+      - Evidence: `agent-browser screenshot` for visual proof
+      - Errors: `agent-browser console` for JS errors
+4. Stop dev server when done
 
 ## Evidence Format
 For each browser verification:

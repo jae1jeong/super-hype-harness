@@ -15,20 +15,27 @@ Final quality assurance after all sprints complete. Runs as Agent subprocess.
 ## QA Strategy by App Type
 
 ### web
-1. Start dev server: run the project's dev command in background
-2. Wait for server ready: poll `curl -s -o /dev/null -w "%{http_code}" http://localhost:PORT` until 200 (max 30s)
+1. Start dev server in background (project-specific command from package.json)
+2. Wait for server ready: poll with curl until 200 (max 30s)
 3. Run [agent-browser](https://github.com/vercel-labs/agent-browser) QA scenarios based on spec's user journey:
    ```bash
-   npx @anthropic-ai/agent-browser --url http://localhost:PORT
+   agent-browser open http://localhost:PORT
+   agent-browser snapshot     # See page structure
+   agent-browser click "@e1"  # Interact with elements
+   agent-browser fill "@e3" "test data"
+   agent-browser screenshot   # Evidence
+   agent-browser console      # Check for JS errors
    ```
-   - Navigate to each key page
+   For each scenario from the spec:
+   - Navigate to the relevant page
    - Test core interactions (click, fill forms, submit)
-   - Verify data persistence (create → refresh → still there?)
+   - Verify data persistence (create, navigate away, come back, still there?)
    - Check error handling (invalid input, 404 pages)
-   - Check browser console for errors
-4. Stop dev server (kill by PID)
+   - Check console for errors
+   - Screenshot before/after for evidence
+4. Stop dev server when done
 
-If agent-browser is not installed, fall back to curl-based verification and note limitation in QA report.
+If agent-browser is not installed, fall back to curl-based verification and note "DEGRADED" in QA report.
 
 ### cli
 1. Build the project
