@@ -23,12 +23,11 @@ claude plugins install github:jaewon/super-hype-harness
 ## Requirements
 
 - Claude Code (latest)
+- `gh` CLI (for PR creation in ship phase)
 
-### Optional (enhanced features)
+### Optional
 
-- [gstack](https://github.com/garrytan/gstack) -- plan-ceo-review, plan-eng-review, review, ship
-- [superpowers](https://github.com/obra/superpowers) -- brainstorming patterns
-- [agent-browser](https://github.com/vercel-labs/agent-browser) -- browser QA
+- [agent-browser](https://github.com/vercel-labs/agent-browser) — Enhanced browser QA for web apps (falls back to build/test verification without it)
 
 ## How It Works
 
@@ -75,3 +74,13 @@ app_type: web                  # web | cli | library
 
 Add custom generators in `generators/` and evaluators in `evaluators/`.
 See `generators/README.md` and `evaluators/README.md` for details.
+
+## Credits & Inspiration
+
+This plugin's patterns are adapted from several excellent projects:
+
+- **[Anthropic's Harness Engineering](https://www.anthropic.com/engineering/harness-design-long-running-apps)** — The Planner → Generator → Evaluator pipeline architecture, context reset via Agent subprocesses, GAN-inspired evaluation loops
+- **[gstack](https://github.com/garrytan/gstack)** — Review workflow patterns (CEO review, engineering review, design review), ship pipeline, investigate/debugging methodology, office-hours brainstorming style
+- **[superpowers](https://github.com/obra/superpowers)** — Verification-before-completion discipline, systematic debugging phases, checklist-driven workflows, HARD-GATE pattern, subagent-driven development
+
+All patterns are internalized — **no external plugins required**. This plugin is fully standalone.

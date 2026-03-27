@@ -4,6 +4,8 @@ description: harness pipeline brainstorming phase. Fleshes out app ideas into de
 allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
+> Tech decision framework adapted from [dev plugin](https://github.com/anthropics/team-attention-plugins) tech-decision skill.
+
 # Harness Brainstorm
 
 Interactive brainstorming skill for the harness pipeline. Runs in the main session (NOT as an Agent subprocess) because it requires user conversation.
@@ -25,27 +27,34 @@ Ask questions ONE AT A TIME. Prefer multiple choice when possible.
 Follow the 4-phase framework from `references/question-framework.md`:
 1. Vision (What & Why) -- understand the core problem
 2. Scope -- define MVP boundaries
-3. Tech Decisions -- use `/tech-decision` skill if available (see below)
+3. Tech Decisions -- structured comparison approach (see below)
 4. UX Flow -- map the user journey
 
-### Phase 3: Tech Decisions with /tech-decision
+### Phase 3: Tech Decisions
 
-If the `dev:tech-decision` skill is available (from the dev plugin), invoke it for Phase 3 instead of asking simple multiple choice questions. This provides systematic multi-source research with tradeoff analysis.
+Guide the user through tech stack decisions using a structured comparison approach:
 
-**When available:**
-1. Summarize the vision and scope from Phases 1-2
-2. Invoke `/tech-decision` with the context: "Given [app description] with [scope], recommend the tech stack: frontend, backend, database, deployment"
-3. Present the `/tech-decision` results to the user
-4. Let the user accept, modify, or override recommendations
-5. Lock in the final stack
+1. Based on the app's requirements from Phases 1-2, propose 2-3 tech stack options
+2. For each option, present:
+   - Stack components (frontend, backend, DB, deployment)
+   - Pros for THIS specific project
+   - Cons for THIS specific project
+   - Effort estimate
+3. Make a clear recommendation with reasoning
+4. Let the user accept, modify, or override
 
-**When NOT available (fallback):**
-Ask simple multiple choice questions as defined in `references/question-framework.md` Phase 3:
-- Frontend: React / Vue / Svelte / other
-- Backend: Express / FastAPI / Next.js / other
-- Database: SQLite / PostgreSQL / none
-- Deployment: Vercel / local / other
-- External APIs needed?
+Example format:
+```
+Option A: Next.js + Prisma + PostgreSQL + Vercel
+  Pros: Full-stack in one framework, great DX, easy deploy
+  Cons: Vendor lock-in on Vercel, heavier for simple apps
+
+Option B: Vite + Express + SQLite + manual deploy
+  Pros: Lightweight, flexible, no vendor lock-in
+  Cons: More manual setup, separate frontend/backend
+
+RECOMMENDATION: Option A because [reason specific to this app].
+```
 
 ### Office-Hours Behaviors
 
