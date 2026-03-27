@@ -80,6 +80,7 @@ claude plugins install super-hype-harness@super-hype-harness
 - Each phase runs in an isolated Agent subprocess (context reset prevents quality degradation on long tasks)
 - The Evaluator is independent and skeptical. It does not trust the Generator's claims. It runs the app and checks.
 - For web apps, the Evaluator uses [agent-browser](https://github.com/vercel-labs/agent-browser) every sprint to open pages, click elements, fill forms, check for console errors, and capture screenshots as evidence.
+- **Skill onboarding**: first run detects installed skills (gstack, superpowers, etc.) and lets you pick which ones each pipeline phase should use. 4 choices, done.
 - Rate limit auto-resume: if Claude Code hits a rate limit, the pipeline saves state and automatically resumes when the limit resets.
 - Orchestrator self-reset: every 3 sprints (configurable), the orchestrator saves state and starts a fresh session to prevent context bloat.
 
@@ -141,6 +142,18 @@ self_reset_interval: 3         # Orchestrator resets context every N sprints
 max_retries: 3                 # Max retries per sprint before pivot
 max_pivots: 2                  # Max pivots per sprint before escalate
 app_type: web                  # web | cli | library
+
+# Skill mappings (set during onboarding, editable anytime)
+# Empty = built-in pattern. Skill name = sub-agent uses that skill.
+skills:
+  brainstorm:                  # e.g., office-hours
+  ceo_review:                  # e.g., plan-ceo-review
+  eng_review:                  # e.g., plan-eng-review
+  design_review:               # e.g., plan-design-review
+  evaluate_qa:                 # e.g., browse
+  debug:                       # e.g., investigate
+  code_review:                 # e.g., review
+  ship:                        # e.g., ship
 ```
 
 ## Codex CLI Support
@@ -169,3 +182,7 @@ This plugin's patterns are adapted from several excellent projects:
 - **[superpowers](https://github.com/obra/superpowers)** — Verification-before-completion, systematic debugging, checklist-driven workflows, HARD-GATE pattern
 
 All patterns are internalized — **no external plugins required**. This plugin is fully standalone.
+
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for version history.
