@@ -36,7 +36,7 @@ docs/harness/feedback/
 
 ### 2. Config (docs/harness/config.md)
 
-If config.md doesn't exist, create with defaults:
+If config.md doesn't exist, run the **Skill Onboarding** flow (see below), then create config with defaults + selected skills:
 ```yaml
 auto_resume: true
 generator: default
@@ -46,9 +46,76 @@ self_reset_interval: 3
 max_retries: 3
 max_pivots: 2
 app_type: web
+
+# Skill mappings (set during onboarding, editable anytime)
+# Empty = use built-in harness pattern. Skill name = sub-agent uses that skill.
+skills:
+  brainstorm:
+  ceo_review:
+  eng_review:
+  design_review:
+  evaluate_qa:
+  debug:
+  code_review:
+  ship:
 ```
 
 If `--no-auto-resume` flag: set `auto_resume: false`.
+
+### Skill Onboarding (first run only)
+
+On first run (config.md does not exist), scan for installed skills and let the user choose per category. Use AskUserQuestion for each category.
+
+**Step 1: Scan available skills**
+
+Check which skills are accessible by reading available skill names from the system. Look for these known skills:
+- gstack: `office-hours`, `plan-ceo-review`, `plan-eng-review`, `plan-design-review`, `browse`, `review`, `investigate`, `ship`, `qa`, `design-review`
+- superpowers: `superpowers:brainstorming`, `superpowers:test-driven-development`, `superpowers:systematic-debugging`
+- Other installed skills that match harness categories
+
+**Step 2: Present choices per category (4 questions)**
+
+For each category, use AskUserQuestion showing only skills that were detected + the built-in option:
+
+**Category 1 - Planning:**
+> Which skill should handle app planning?
+- A) office-hours (gstack) -- YC-style problem diagnosis, premise challenge, design doc
+- B) superpowers:brainstorming -- Design exploration, approach comparison
+- C) Built-in -- Harness question framework (no external skills needed)
+
+**Category 2 - Review:**
+> Which skills should handle plan review?
+- A) plan-ceo-review + plan-eng-review (gstack) -- 10-section CEO review + architecture review
+- B) Built-in -- Checklist-based scope + engineering review
+
+**Category 3 - QA / Evaluation:**
+> Which skill should the Evaluator use for browser testing?
+- A) browse (gstack) -- Headless browser daemon, fast, persistent state
+- B) Built-in -- agent-browser CLI (vercel-labs/agent-browser)
+
+**Category 4 - Ship:**
+> Which skill should handle shipping?
+- A) ship (gstack) -- VERSION bump + CHANGELOG + test + PR
+- B) Built-in -- Test suite + gh pr create
+
+Only show options for skills that were actually detected. If no external skills detected for a category, skip that question and use built-in.
+
+**Step 3: Write config.md with selections**
+
+Map user choices to the `skills:` section in config.md. Example result:
+```yaml
+skills:
+  brainstorm: office-hours
+  ceo_review: plan-ceo-review
+  eng_review: plan-eng-review
+  design_review: plan-design-review
+  evaluate_qa: browse
+  debug: investigate
+  code_review: review
+  ship: ship
+```
+
+If user chose built-in for a category, leave the value empty.
 
 ### 3. State (docs/harness/state.md)
 
@@ -85,8 +152,10 @@ Do NOT proceed to Phase 2 until brainstorming produces a spec document.
 
 Run the brainstorming process DIRECTLY in the main session (the user needs to interact):
 
-1. Read `skills/harness-brainstorm/SKILL.md`
-2. Follow its instructions: question framework, pushback, scope expansion
+1. Check `config.skills.brainstorm`:
+   - If set (e.g., `office-hours`): invoke `Skill("office-hours")` with the app description
+   - If empty: Read `skills/harness-brainstorm/SKILL.md` and follow its instructions
+2. Follow the skill's instructions: question framework, pushback, scope expansion
 3. When complete: spec is written to `docs/harness/specs/YYYY-MM-DD-<name>-spec.md`
 4. Detect app_type from the conversation, update config.md
 5. Update state.md: `current_phase: review`, update spec path
@@ -100,9 +169,11 @@ Do NOT proceed to Phase 3 until all reviews pass.
 
 ### Step 2a: CEO Review
 
-Dispatch Agent subprocess to perform a checklist-based scope review of the spec:
+Check `config.skills.ceo_review`:
+- If set (e.g., `plan-ceo-review`): Dispatch Agent with instruction to invoke `Skill("plan-ceo-review")` on the spec file.
+- If empty: Dispatch Agent subprocess with built-in checklist:
 
-**Checklist:**
+**Built-in checklist (used when no skill configured):**
 - Is the MVP appropriately scoped? (not too big, not too small)
 - Are features over/under-scoped for the target user?
 - Is the tech stack realistic for the goals?
@@ -115,9 +186,13 @@ Dispatch Agent subprocess to perform a checklist-based scope review of the spec:
 
 ### Step 2b: Design Review (web apps only)
 
-If config `app_type` is `web`, dispatch Agent subprocess to perform a design review of the spec:
+If `app_type` is NOT `web`: skip this step.
 
-**Checklist:**
+Check `config.skills.design_review`:
+- If set (e.g., `plan-design-review`): Dispatch Agent with instruction to invoke `Skill("plan-design-review")` on the spec.
+- If empty: Dispatch Agent subprocess with built-in checklist:
+
+**Built-in checklist:**
 - Information hierarchy — what does the user see first? Is the most important content prominent?
 - Key interactions and states — are loading, empty, error, and success states all considered?
 - Responsive considerations — does the design degrade gracefully across viewport sizes?
@@ -127,13 +202,13 @@ If config `app_type` is `web`, dispatch Agent subprocess to perform a design rev
 - Design issues found → revise spec, re-review
 - Approved → continue
 
-If `app_type` is NOT `web`: skip this step.
-
 ### Step 2c: Engineering Review
 
-Dispatch Agent subprocess to perform a checklist-based technical review of the spec:
+Check `config.skills.eng_review`:
+- If set (e.g., `plan-eng-review`): Dispatch Agent with instruction to invoke `Skill("plan-eng-review")` on the spec.
+- If empty: Dispatch Agent subprocess with built-in checklist:
 
-**Checklist:**
+**Built-in checklist:**
 - Data model: are entities and relationships well-defined?
 - API design: are endpoints, methods, and responses complete and consistent?
 - Error handling: are failure modes considered and recovery strategies defined?
@@ -250,10 +325,12 @@ Git commit.
 
 Update state.md: `current_phase: ship`
 
-Ship the project:
-1. Run the test suite (`npm test`, `pytest`, or whatever the project uses). All tests must pass.
-2. Create a PR via `gh pr create` with a summary of what was built.
-3. Display the PR URL.
+Check `config.skills.ship`:
+- If set (e.g., `ship`): Dispatch Agent with instruction to invoke `Skill("ship")`.
+- If empty: Ship with built-in flow:
+  1. Run the test suite. All tests must pass.
+  2. Create a PR via `gh pr create` with a summary of what was built.
+  3. Display the PR URL.
 
 If the test suite fails, use the Systematic Debugging pattern (Phase 1-4 from above) to fix failures before creating the PR.
 
