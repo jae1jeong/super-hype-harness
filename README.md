@@ -9,7 +9,11 @@ Inspired by [Anthropic's Harness Design for Long-Running Apps](https://www.anthr
 ## Install
 
 ```bash
-claude plugins install github:jaewon/super-hype-harness
+# 1. Add marketplace
+claude plugins marketplace add jaewon/super-hype-harness
+
+# 2. Install plugin
+claude plugins install super-hype-harness@super-hype-harness
 ```
 
 ## Usage
