@@ -11,7 +11,7 @@
       "name": "super-hype-harness",
       "source": "./",
       "description": "Long-running app development harness: Planner, Generator, Evaluator pipeline with context reset and skill orchestration",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "author": {
         "name": "jaewon"
       },
