@@ -1,30 +1,16 @@
 ---
 name: harness-contract
-description: Negotiates testable completion criteria between Generator and Evaluator for each sprint. Used internally by the harness pipeline.
+description: Reference for sprint contract format. Generator uses this to propose contracts. Not dispatched as separate agent.
 allowed-tools: [Read, Write, Glob, Grep]
 ---
 
-# Harness Contract
+# Sprint Contract Format Reference
 
-Converts a sprint's plan section into a detailed, testable contract. Runs as an Agent subprocess.
+This is a reference document for the contract format. In the file-based handoff architecture, the **Generator proposes contracts directly** (not a separate Contract agent).
 
-## Input
+> "The generator proposed what it would build and how success would be verified, and the evaluator reviewed that proposal." — Anthropic
 
-- Sprint plan section from `docs/harness/plans/YYYY-MM-DD-plan.md` (specific sprint number provided by orchestrator)
-- Config from `docs/harness/config.md` (for app_type)
-
-## Process
-
-1. Read the sprint's Done Definition from the plan
-2. For each Done item, generate:
-   - A specific, verifiable test criterion
-   - The exact command or action to verify it
-   - Expected output/behavior
-3. Add scope exclusions (what is NOT part of this sprint)
-
-## Output Format
-
-Write to `docs/harness/contracts/sprint-N.md`:
+## Contract Format
 
 ```markdown
 # Sprint N Contract: [Sprint Title]
@@ -32,31 +18,32 @@ Write to `docs/harness/contracts/sprint-N.md`:
 ## Completion Criteria
 
 ### 1. [Criterion Name]
-- **Test**: [exact command or action]
+- **Test**: [exact command or action to verify]
 - **Expected**: [exact expected output or behavior]
 - **Type**: build | test | api | browser | cli
+- **Threshold**: [hard pass/fail condition — if any ONE criterion fails, the sprint fails]
 
 ### 2. [Criterion Name]
 ...
 
-## Verification Commands
+## Reference Alignment (if references exist)
+- [which reference patterns this sprint should match]
 
+## Verification Commands
 \`\`\`bash
-# Run all verifications in sequence
 [command 1]
 [command 2]
-...
 \`\`\`
 
 ## Scope Exclusions
-- [What is explicitly NOT part of this sprint]
-- [Features deferred to later sprints]
+- [what is NOT part of this sprint]
 ```
 
 ## Guidelines
 
 - Every criterion must be machine-verifiable (no subjective judgments)
-- Include both positive tests (it works) and negative tests (it handles errors) where relevant
-- For web apps (app_type: web), include browser verification steps
-- For CLI apps (app_type: cli), include CLI invocation tests
-- Keep contracts focused: 3-8 criteria per sprint
+- Include both positive tests (it works) and negative tests (handles errors)
+- For web apps: include browser verification steps
+- For CLI apps: include CLI invocation tests
+- Keep focused: 3-8 criteria per sprint
+- Each criterion has a **hard threshold** — "if any one fell below it, the sprint failed"

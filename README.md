@@ -1,6 +1,8 @@
 # Super Hype Harness
 
-Long-running app development harness for Claude Code. One command takes you from idea to PR: brainstorm, review, plan, build, test, ship. The Generator builds, the Evaluator opens a real browser and tests like a user would. When it fails, the Generator fixes and tries again.
+Long-running app development harness for Claude Code. One command takes you from idea to PR: brainstorm, review, plan, build, test, ship.
+
+**File-based handoff, one continuous session.** No orchestrator. The Generator builds, the Evaluator opens a real browser — screenshots, studies, and tests like a user would. When it fails, the Generator fixes and tries again. All communication happens via files.
 
 Inspired by [Anthropic's Harness Design for Long-Running Apps](https://www.anthropic.com/engineering/harness-design-long-running-apps).
 
@@ -22,81 +24,86 @@ claude plugins install super-hype-harness@super-hype-harness
 # Start a new pipeline
 /harness "daily briefing app for my Google Calendar"
 
+# With a reference site to match
+/harness "calendar app" --ref https://cal.com
+
+# With a design mockup
+/harness "dashboard" --ref ./mockup.png
+
 # Check progress
 /harness-status
 
 # Resume after rate limit or interruption
 /harness --resume
-
-# Disable auto-resume for this run
-/harness --no-auto-resume "my app idea"
 ```
 
 ## Requirements
 
 - Claude Code (latest)
 - `gh` CLI (for PR creation in ship phase)
-
-### Optional
-
-- [agent-browser](https://github.com/vercel-labs/agent-browser) — **Strongly recommended for web apps.** The Evaluator uses it to open your app in a real browser, click through flows, fill forms, and catch bugs every sprint. Without it, web QA falls back to curl/build checks (degraded mode).
+- [agent-browser](https://github.com/vercel-labs/agent-browser) — **Required for web apps.** The Evaluator uses it every sprint to open your app in a real browser, screenshot pages, study the implementation, and test like a user.
 
 ## How It Works
 
+> "Communication was handled via files: one agent would write a file, another agent would read it." — Anthropic
+
 ```
-/harness "my app idea"
+/harness "my app idea" --ref https://example.com
     |
     v
- Brainstorm (interactive Q&A with you)
+ Bootstrap (create dirs, capture references, init state.md)
     |
     v
- Review (CEO scope review + Design review + Eng architecture review)
+ Role Loop (one continuous session, file-based handoff):
     |
-    v
- Plan (decompose into sprints with testable contracts)
+    ├─ Brainstorm ──→ writes spec ──→ state.md: next_role: review
     |
-    v
- Sprint Loop (repeats for each sprint):
+    ├─ Review ──────→ approves spec ──→ state.md: next_role: planner
     |
-    |   Generator -----> implements code, commits
-    |       |
-    |   Evaluator -----> opens app in browser, tests like a user
-    |       |              clicks buttons, fills forms, checks console
-    |       |              finds bugs, reports with screenshots
-    |       |
-    |   PASS? -----> next sprint
-    |   FAIL? -----> Generator fixes based on feedback (max 3 retries)
-    |   STUCK? ----> Generator tries different approach (max 2 pivots)
-    |   GIVE UP? --> log issue, move to next sprint (escalate)
+    ├─ Planner ─────→ writes plan ──→ state.md: next_role: generator
     |
-    v
- QA (full app verification with agent-browser)
+    ├─ Generator ───→ proposes contract
+    |                  implements code
+    |                  self-evaluates
+    |                  writes handoff ──→ state.md: next_role: evaluator
     |
-    v
- Ship (test suite + PR creation via gh)
+    ├─ Evaluator ───→ opens app in browser
+    |                  screenshots & studies every page
+    |                  tests each contract criterion
+    |                  compares with reference (if any)
+    |                  writes feedback + judgment
+    |                  ├─ PASS ──→ next sprint (or QA if last)
+    |                  ├─ RETRY ──→ back to generator
+    |                  ├─ PIVOT ──→ generator tries new approach
+    |                  └─ ESCALATE ──→ log & skip
+    |
+    ├─ QA ──────────→ full app verification ──→ state.md: next_role: ship
+    |
+    └─ Ship ────────→ tests + PR creation ──→ done
 ```
 
-**Key features:**
-- Each phase runs in an isolated Agent subprocess (context reset prevents quality degradation on long tasks)
-- The Evaluator is independent and skeptical. It does not trust the Generator's claims. It runs the app and checks.
-- For web apps, the Evaluator uses [agent-browser](https://github.com/vercel-labs/agent-browser) every sprint to open pages, click elements, fill forms, check for console errors, and capture screenshots as evidence.
-- **Skill onboarding**: first run detects installed skills (gstack, superpowers, etc.) and lets you pick which ones each pipeline phase should use. 4 choices, done.
-- Rate limit auto-resume: if Claude Code hits a rate limit, the pipeline saves state and automatically resumes when the limit resets.
-- Orchestrator self-reset: every 3 sprints (configurable), the orchestrator saves state and starts a fresh session to prevent context bloat.
+**Key design principles:**
+- **One continuous session** with automatic compaction — no context resets between phases
+- **File-based handoff** — each role reads files written by the previous role, writes files for the next
+- **No orchestrator** — `state.md` is the coordination mechanism, each role updates `next_role`
+- **Generator proposes contracts** — "the generator proposed what it would build and how success would be verified"
+- **Evaluator screenshots and studies** — not just checking elements exist, but visually analyzing the implementation
+- **Hard thresholds** — "if any one criterion fell below it, the sprint failed"
+- **Reference matching** — provide a URL or image, the harness tries to replicate it
 
 ## Pipeline Output
-
-The pipeline creates structured artifacts in your project:
 
 ```
 docs/harness/
 ├── specs/           # Brainstorm result (app spec)
 ├── plans/           # Sprint plan with testable criteria
-├── contracts/       # Per-sprint completion contracts
-├── handoff/         # Generator -> Evaluator handoff docs
-├── feedback/        # Evaluator feedback with evidence
+├── contracts/       # Per-sprint completion contracts (proposed by Generator)
+├── handoff/         # Generator → Evaluator handoff docs
+├── feedback/        # Evaluator feedback with screenshots and evidence
+├── references/      # Reference screenshots and images
 ├── qa-report.md     # Final QA report
-├── state.md         # Pipeline state (for resume)
+├── sprint-log.md    # Centralized sprint history (scores, duration, retries)
+├── state.md         # Pipeline state + next_role (handoff protocol)
 └── config.md        # Configuration
 ```
 
@@ -104,15 +111,15 @@ docs/harness/
 
 | Skill | Type | Description |
 |-------|------|-------------|
-| `/harness` | user-invoked | Main orchestrator. Start, resume, or check status. |
+| `/harness` | user-invoked | Bootstrap + role loop. Start, resume, or check status. |
 | `/harness-status` | user-invoked | Display pipeline progress and sprint scores. |
-| `harness-brainstorm` | model-invoked | Interactive app planning (one question at a time, pushback on framing) |
-| `harness-planner` | model-invoked | Spec to sprint decomposition (5-15 sprints) |
-| `harness-contract` | model-invoked | Sprint contract with testable completion criteria |
-| `harness-generator` | model-invoked | Code implementation with verification-before-completion |
-| `harness-evaluator` | model-invoked | **Opens the app, tests like a user, finds bugs.** Read-only. Uses agent-browser for web apps. |
-| `harness-qa` | model-invoked | Final full-app QA (browser for web, tests for CLI/library) |
-| `harness-resume` | internal | Resume from rate limit, self-reset, or manual pause |
+| `harness-brainstorm` | role | Interactive app planning (one question at a time) |
+| `harness-planner` | role | Spec to sprint decomposition (5-15 sprints) |
+| `harness-contract` | reference | Contract format reference (Generator proposes contracts directly) |
+| `harness-generator` | role | Propose contract, implement code, self-evaluate, write handoff |
+| `harness-evaluator` | role | Screenshot, study, test, judge. Updates state.md with next_role. |
+| `harness-qa` | role | Final full-app QA with browser testing |
+| `harness-resume` | internal | Resume from rate limit or pause |
 
 ### Built-in Presets
 
@@ -131,29 +138,27 @@ docs/harness/
 
 ## Configuration
 
-The pipeline creates `docs/harness/config.md` with these defaults:
+`docs/harness/config.md` defaults:
 
 ```yaml
-auto_resume: true              # Auto-resume after rate limit (default: on)
-generator: default             # Generator profile (generators/<name>/SKILL.md)
-evaluator: default             # Evaluator profile (evaluators/<name>/SKILL.md)
-browser_evaluator: browser-qa  # Browser QA profile (web apps)
-self_reset_interval: 3         # Orchestrator resets context every N sprints
-max_retries: 3                 # Max retries per sprint before pivot
-max_pivots: 2                  # Max pivots per sprint before escalate
-app_type: web                  # web | cli | library
+auto_resume: true
+generator: default
+evaluator: default
+browser_evaluator: browser-qa
+max_retries: 3
+max_pivots: 2
+app_type: web
+has_references: false
 
-# Skill mappings (set during onboarding, editable anytime)
-# Empty = built-in pattern. Skill name = sub-agent uses that skill.
 skills:
-  brainstorm:                  # e.g., office-hours
-  ceo_review:                  # e.g., plan-ceo-review
-  eng_review:                  # e.g., plan-eng-review
-  design_review:               # e.g., plan-design-review
-  evaluate_qa:                 # e.g., browse
-  debug:                       # e.g., investigate
-  code_review:                 # e.g., review
-  ship:                        # e.g., ship
+  brainstorm:         # e.g., office-hours
+  ceo_review:         # e.g., plan-ceo-review
+  eng_review:         # e.g., plan-eng-review
+  design_review:      # e.g., plan-design-review
+  evaluate_qa:        # e.g., browse
+  debug:              # e.g., investigate
+  code_review:        # e.g., review
+  ship:               # e.g., ship
 ```
 
 ## Codex CLI Support
@@ -161,12 +166,9 @@ skills:
 This plugin also works with [OpenAI Codex CLI](https://developers.openai.com/codex/cli) via `AGENTS.md`.
 
 ```bash
-# Symlink skills for Codex
 cd your-project
 ln -s path/to/super-hype-harness/skills .agents/skills
 ```
-
-See `AGENTS.md` for details.
 
 ## Extending
 
@@ -175,13 +177,11 @@ See `generators/README.md` and `evaluators/README.md` for details.
 
 ## Credits & Inspiration
 
-This plugin's patterns are adapted from several excellent projects:
+- **[Anthropic's Harness Engineering](https://www.anthropic.com/engineering/harness-design-long-running-apps)** — File-based handoff, one continuous session, GAN-inspired Generator/Evaluator loop, sprint contracts, screenshot-and-study evaluation
+- **[gstack](https://github.com/garrytan/gstack)** — Review workflow patterns, ship pipeline, office-hours brainstorming
+- **[superpowers](https://github.com/obra/superpowers)** — Verification-before-completion, systematic debugging, checklist-driven workflows
 
-- **[Anthropic's Harness Engineering](https://www.anthropic.com/engineering/harness-design-long-running-apps)** — Planner/Generator/Evaluator pipeline, context reset via Agent subprocesses, GAN-inspired evaluation loops, sprint contracts
-- **[gstack](https://github.com/garrytan/gstack)** — Review workflow patterns (CEO/engineering/design review), ship pipeline, investigate/debugging methodology, office-hours brainstorming style
-- **[superpowers](https://github.com/obra/superpowers)** — Verification-before-completion, systematic debugging, checklist-driven workflows, HARD-GATE pattern
-
-All patterns are internalized — **no external plugins required**. This plugin is fully standalone.
+All patterns are internalized — **no external plugins required**.
 
 ## Changelog
 

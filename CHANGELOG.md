@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-03-29
+
+### Changed (BREAKING)
+- **오케스트레이터 제거 → 파일 기반 핸드오프** — Anthropic 원문 아키텍처와 동일하게 변경
+  - 중앙 오케스트레이터(Agent subprocess dispatch) 제거
+  - 하나의 연속 세션에서 역할 루프로 진행
+  - 각 역할이 state.md의 `next_role`을 읽고 → 작업 → 다음 역할 기록
+  - "one agent writes a file, another reads it"
+- **Generator가 직접 계약 제안** — 별도 Contract Agent 제거, Generator가 계약 작성 후 Evaluator가 검증
+- **Evaluator가 판단 로직 소유** — RETRY/PIVOT/ESCALATE 판단 + state.md 업데이트 + sprint-log 기록을 Evaluator 내부로 이동
+- **Self-Reset 제거** — 연속 세션 + 자동 compaction 사용
+- harness-contract 스킬이 참조 문서로 변경 (별도 에이전트가 아님)
+
+### Added
+- **레퍼런스 시스템** — `--ref <url-or-image>` 옵션으로 참조 사이트/이미지 제공
+  - URL: agent-browser로 스크린샷 캡처 → docs/harness/references/
+  - 이미지: 복사 → docs/harness/references/
+  - Generator가 레퍼런스를 참고해서 구현
+  - Evaluator가 레퍼런스와 비교 평가
+- **스크린샷 시각 분석** — Evaluator가 agent-browser screenshot 후 Read 도구로 이미지를 열어 시각적 분석
+- **하드 임계값 스코어링** — "if any one criterion fell below it, the sprint failed"
+- **Few-shot 평가 캘리브레이션** — 점수 9/6/3 예시 추가
+- 평가 기준에 Anthropic 원문 직접 인용 추가
+
 ## [0.3.2] - 2026-03-29
 
 ### Added

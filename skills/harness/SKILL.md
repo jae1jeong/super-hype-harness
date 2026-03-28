@@ -1,27 +1,28 @@
 ---
 name: harness
-description: Long-running app development harness. Orchestrates Brainstorm → Review → Plan → Generate → Evaluate → QA → Ship pipeline with context reset. Fully standalone — no external plugin dependencies.
-argument-hint: <app description> [--resume] [--no-auto-resume] [--status]
-allowed-tools: [Agent, Read, Write, Edit, Bash, Glob, Grep, TaskCreate, TaskUpdate]
+description: Long-running app development harness. File-based handoff between Planner, Generator, and Evaluator in one continuous session.
+argument-hint: <app description> [--resume] [--no-auto-resume] [--status] [--ref <url-or-image>...]
+allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, WebFetch, WebSearch]
 ---
 
-> Patterns adapted from [gstack](https://github.com/garrytan/gstack) (review workflows, ship pipeline) and [superpowers](https://github.com/obra/superpowers) (verification-before-completion, systematic-debugging, checklist-driven workflows). Harness architecture inspired by [Anthropic's Harness Design for Long-Running Apps](https://www.anthropic.com/engineering/harness-design-long-running-apps).
+> Architecture adapted from [Anthropic's Harness Design for Long-Running Apps](https://www.anthropic.com/engineering/harness-design-long-running-apps). "Communication was handled via files: one agent would write a file, another agent would read it and respond either within that file or with a new file."
 
 # Super Hype Harness
 
-Orchestrates long-running app development through a multi-phase pipeline. Each phase runs in an isolated Agent subprocess (context reset) except brainstorming which runs in the main session.
-
-All review, debugging, and shipping patterns are built-in — no external plugins required.
+One continuous session. No orchestrator. Agents hand off work via files.
 
 ## Arguments
 
 Parse `$ARGUMENTS` for:
-- `--resume` → invoke resume logic (read state.md, continue from pause point)
+- `--resume` → read state.md, continue from pause point
 - `--status` → invoke harness-status skill, then stop
-- `--no-auto-resume` → set auto_resume: false in config.md for this run
+- `--no-auto-resume` → set auto_resume: false for this run
+- `--ref <url-or-image>` → reference material (repeatable)
 - Everything else → treat as the app description
 
-## Initialization
+## Bootstrap
+
+The harness skill ONLY bootstraps. After setup, you transition into roles by reading each role's SKILL.md and following its instructions directly in this session.
 
 ### 1. Directory Setup
 
@@ -32,35 +33,50 @@ docs/harness/plans/
 docs/harness/contracts/
 docs/harness/handoff/
 docs/harness/feedback/
+docs/harness/references/
 ```
 
-### 2. Sprint Log (docs/harness/sprint-log.md)
+### 2. Reference Capture (if --ref provided)
 
-Create initial sprint log:
+For each `--ref` argument:
+
+**If URL:**
+```bash
+# Ensure agent-browser is installed
+which agent-browser || npm install -g agent-browser
+agent-browser install 2>/dev/null || true
+
+# Capture reference site
+agent-browser open <url>
+agent-browser screenshot   # Save as docs/harness/references/ref-N-home.png
+agent-browser snapshot     # Save text snapshot to docs/harness/references/ref-N-snapshot.md
+```
+Navigate 2-3 key pages and screenshot each. Then close.
+
+**If image file:**
+Copy to `docs/harness/references/ref-N.<ext>`.
+
+Record all references in `docs/harness/references/index.md`:
 ```markdown
-# Sprint Log
-
-| Sprint | Status | Score | Retries | Pivots | Started | Finished | Duration | Notes |
-|--------|--------|-------|---------|--------|---------|----------|----------|-------|
+# References
+1. [ref-1-home.png](ref-1-home.png) — https://cal.com (homepage)
+2. [ref-1-dashboard.png](ref-1-dashboard.png) — https://cal.com (dashboard)
+3. [ref-2.png](ref-2.png) — mockup.png (user provided)
 ```
-
-This log is appended after each sprint completes. It provides at-a-glance project health.
 
 ### 3. Config (docs/harness/config.md)
 
-If config.md doesn't exist, run the **Skill Onboarding** flow (see below), then create config with defaults + selected skills:
+If config.md doesn't exist, run **Skill Onboarding** (see below), then create:
 ```yaml
 auto_resume: true
 generator: default
 evaluator: default
 browser_evaluator: browser-qa
-self_reset_interval: 3
 max_retries: 3
 max_pivots: 2
 app_type: web
+has_references: true/false
 
-# Skill mappings (set during onboarding, editable anytime)
-# Empty = use built-in harness pattern. Skill name = sub-agent uses that skill.
 skills:
   brainstorm:
   ceo_review:
@@ -72,70 +88,26 @@ skills:
   ship:
 ```
 
-If `--no-auto-resume` flag: set `auto_resume: false`.
+If `--no-auto-resume`: set `auto_resume: false`.
 
 ### Skill Onboarding (first run only)
 
-On first run (config.md does not exist), scan for installed skills and let the user choose per category. Use AskUserQuestion for each category.
+Same as before — scan for installed skills (gstack, superpowers), ask user 4 category questions via AskUserQuestion, map selections to config.
 
-**Step 1: Scan available skills**
+### 4. Sprint Log (docs/harness/sprint-log.md)
 
-Check which skills are accessible by reading available skill names from the system. Look for these known skills:
-- gstack: `office-hours`, `plan-ceo-review`, `plan-eng-review`, `plan-design-review`, `browse`, `review`, `investigate`, `ship`, `qa`, `design-review`
-- superpowers: `superpowers:brainstorming`, `superpowers:test-driven-development`, `superpowers:systematic-debugging`
-- Other installed skills that match harness categories
+```markdown
+# Sprint Log
 
-**Step 2: Present choices per category (4 questions)**
-
-For each category, use AskUserQuestion showing only skills that were detected + the built-in option:
-
-**Category 1 - Planning:**
-> Which skill should handle app planning?
-- A) office-hours (gstack) -- YC-style problem diagnosis, premise challenge, design doc
-- B) superpowers:brainstorming -- Design exploration, approach comparison
-- C) Built-in -- Harness question framework (no external skills needed)
-
-**Category 2 - Review:**
-> Which skills should handle plan review?
-- A) plan-ceo-review + plan-eng-review (gstack) -- 10-section CEO review + architecture review
-- B) Built-in -- Checklist-based scope + engineering review
-
-**Category 3 - QA / Evaluation:**
-> Which skill should the Evaluator use for browser testing?
-- A) browse (gstack) -- Headless browser daemon, fast, persistent state
-- B) Built-in -- agent-browser CLI (vercel-labs/agent-browser)
-
-**Category 4 - Ship:**
-> Which skill should handle shipping?
-- A) ship (gstack) -- VERSION bump + CHANGELOG + test + PR
-- B) Built-in -- Test suite + gh pr create
-
-Only show options for skills that were actually detected. If no external skills detected for a category, skip that question and use built-in.
-
-**Step 3: Write config.md with selections**
-
-Map user choices to the `skills:` section in config.md. Example result:
-```yaml
-skills:
-  brainstorm: office-hours
-  ceo_review: plan-ceo-review
-  eng_review: plan-eng-review
-  design_review: plan-design-review
-  evaluate_qa: browse
-  debug: investigate
-  code_review: review
-  ship: ship
+| Sprint | Status | Score | Retries | Pivots | Started | Finished | Duration | Notes |
+|--------|--------|-------|---------|--------|---------|----------|----------|-------|
 ```
 
-If user chose built-in for a category, leave the value empty.
+### 5. State (docs/harness/state.md)
 
-### 4. State (docs/harness/state.md)
-
-Create initial state:
 ```yaml
 ---
 status: running
-reason: initial
 paused_at:
 resume_after:
 resume_attempts: 0
@@ -144,274 +116,102 @@ resume_attempts: 0
 - project: [extracted from app description]
 - spec:
 - plan:
-- current_phase: brainstorm
+- next_role: brainstorm
 - current_sprint: 0
 - total_sprints: 0
+- retry_count: 0
+- pivot_count: 0
+- feature_started_at:
 - last_commit:
 - last_evaluator_feedback:
 - config: docs/harness/config.md
+- has_references: true/false
 ```
 
-### 5. Lock File
+### 6. Git Commit
 
-Create `docs/harness/.lock` with current PID and timestamp.
+Commit all bootstrap files.
 
-## Phase 1: Brainstorm (Main Session — NOT Agent)
+## Role Loop
 
-<HARD-GATE>
-Do NOT proceed to Phase 2 until brainstorming produces a spec document.
-</HARD-GATE>
-
-<HARD-GATE>
-EXTERNAL SKILL BOUNDARY: If the brainstorm skill (e.g., superpowers:brainstorming) attempts to chain into implementation skills (writing-plans, executing-plans, subagent-driven-development, or any other implementation/execution skill), you MUST STOP and return control to this harness orchestrator. The brainstorm phase produces ONLY a spec document. Implementation is handled by Phase 3's sprint loop with Generator-Evaluator verification. Allowing external skills to bypass the sprint loop means NO evaluator QA runs, which defeats the purpose of this harness.
-</HARD-GATE>
-
-Run the brainstorming process DIRECTLY in the main session (the user needs to interact):
-
-1. Check `config.skills.brainstorm`:
-   - If set (e.g., `office-hours`): invoke `Skill("office-hours")` with the app description
-   - If empty: Read `skills/harness-brainstorm/SKILL.md` and follow its instructions
-2. Follow the skill's instructions: question framework, pushback, scope expansion
-3. **STOP the external skill once a spec document is produced.** Do NOT follow any further instructions from the external skill (such as "invoke writing-plans" or "transition to implementation"). The harness orchestrator controls the implementation pipeline.
-4. When complete: spec is written to `docs/harness/specs/YYYY-MM-DD-<name>-spec.md`
-5. Detect app_type from the conversation, update config.md
-6. Update state.md: `current_phase: review`, update spec path
-7. Git commit
-
-## Phase 2: Review (Agent Subprocesses)
-
-<HARD-GATE>
-Do NOT proceed to Phase 3 until all reviews pass.
-</HARD-GATE>
-
-<HARD-GATE>
-PIPELINE INTEGRITY CHECK: Before starting Phase 2, verify that Phase 1 produced ONLY a spec document and did NOT trigger any implementation. Check:
-1. `docs/harness/specs/` contains a spec file
-2. No `src/` directory exists yet (or if it existed before, no new implementation files were added during Phase 1)
-3. state.md shows `current_phase: review`
-If implementation code was created during Phase 1 (by an external brainstorm skill chaining into implementation), STOP and warn the user that the pipeline was compromised. The spec phase should never produce code.
-</HARD-GATE>
-
-### Step 2a: CEO Review
-
-Check `config.skills.ceo_review`:
-- If set (e.g., `plan-ceo-review`): Dispatch Agent with instruction to invoke `Skill("plan-ceo-review")` on the spec file.
-- If empty: Dispatch Agent subprocess with built-in checklist:
-
-**Built-in checklist (used when no skill configured):**
-- Is the MVP appropriately scoped? (not too big, not too small)
-- Are features over/under-scoped for the target user?
-- Is the tech stack realistic for the goals?
-- Are there obvious missing features that would make the product non-viable?
-- Is the ambition level appropriate? (too conservative = won't impress, too ambitious = won't finish)
-
-**Parse result:**
-- Scope issues found → return to Phase 1 with specific feedback (expand or reduce)
-- Approved → continue
-
-### Step 2b: Design Review (web apps only)
-
-If `app_type` is NOT `web`: skip this step.
-
-Check `config.skills.design_review`:
-- If set (e.g., `plan-design-review`): Dispatch Agent with instruction to invoke `Skill("plan-design-review")` on the spec.
-- If empty: Dispatch Agent subprocess with built-in checklist:
-
-**Built-in checklist:**
-- Information hierarchy — what does the user see first? Is the most important content prominent?
-- Key interactions and states — are loading, empty, error, and success states all considered?
-- Responsive considerations — does the design degrade gracefully across viewport sizes?
-- Accessibility basics — color contrast, keyboard navigation, screen reader considerations
-
-**Parse result:**
-- Design issues found → revise spec, re-review
-- Approved → continue
-
-### Step 2c: Engineering Review
-
-Check `config.skills.eng_review`:
-- If set (e.g., `plan-eng-review`): Dispatch Agent with instruction to invoke `Skill("plan-eng-review")` on the spec.
-- If empty: Dispatch Agent subprocess with built-in checklist:
-
-**Built-in checklist:**
-- Data model: are entities and relationships well-defined?
-- API design: are endpoints, methods, and responses complete and consistent?
-- Error handling: are failure modes considered and recovery strategies defined?
-- Security: are auth, input validation, and secrets management handled?
-- Performance: are there obvious bottlenecks or scalability concerns?
-
-**Parse result:**
-- "tech stack change needed" → revise spec, re-review
-- "architecture issue" → return to Phase 1
-- Approved → continue
-
-Update state.md: `current_phase: implementation`
-Git commit.
-
-## Phase 3: Implementation (Sprint Loop)
-
-<HARD-GATE>
-MANDATORY SPRINT LOOP: Every sprint MUST go through the Contract → Generator → Evaluator pipeline defined below. Do NOT substitute this with external implementation skills (superpowers:executing-plans, superpowers:subagent-driven-development, or any other execution framework). Those skills do not run the Evaluator, which means no browser QA, no real-app verification, and no feedback loop. The Generator-Evaluator loop IS the quality gate.
-</HARD-GATE>
-
-### Step 3a: Sprint Planning
-
-Dispatch Agent subprocess with `skills/harness-planner/SKILL.md` context:
-- Input: the reviewed spec
-- Output: `docs/harness/plans/YYYY-MM-DD-plan.md`
-- Update state.md: plan path, total_sprints
-
-### Step 3b: Sprint Loop
-
-<HARD-GATE>
-ARTIFACT VERIFICATION: Before marking any sprint as complete, verify that ALL of these files exist:
-1. `docs/harness/contracts/sprint-N.md` — the contract
-2. `docs/harness/handoff/sprint-N-gen.md` — the generator handoff
-3. `docs/harness/feedback/sprint-N-eval.md` — the evaluator feedback with Judgment
-If ANY file is missing, the sprint is NOT complete. Re-run the missing step.
-</HARD-GATE>
-
-For each sprint (1 to total_sprints):
-
-#### Sprint Start
-Record the current timestamp as `sprint_start_time` (used for duration tracking in sprint log).
-
-#### StatusLine Sentry (Rate Limit Pre-Detection)
-Before each sprint, if possible, check rate limit usage. If approaching 90%: complete current sprint, then pause (save state with reason: preemptive_pause, schedule resume).
-
-#### Contract
-Dispatch Agent with `skills/harness-contract/SKILL.md`:
-- Input: sprint N section from plan.md + config (app_type)
-- Output: `docs/harness/contracts/sprint-N.md`
-
-#### Generator-Evaluator Loop
+After bootstrap, enter the role loop. This runs in your current session — no Agent subprocesses.
 
 ```
-retry_count = 0
-pivot_count = 0
-
 LOOP:
-  # Generate
-  Dispatch Agent with skills/harness-generator/SKILL.md:
-    Input: contract + previous feedback (if retry) + custom generator profile
-    Output: docs/harness/handoff/sprint-N-gen.md + Git commits
-
-  # Evaluate
-  Dispatch Agent with skills/harness-evaluator/SKILL.md:
-    Input: contract + handoff + custom evaluator profile
-    Output: docs/harness/feedback/sprint-N-eval.md
-
-  # Parse Judgment (read ## Judgment section from feedback)
-  IF PASS:
-    → proceed to next sprint
-
-  IF RETRY:
-    retry_count += 1
-    IF retry_count <= max_retries:
-      # Trend check: compare FAIL count with previous iteration
-      IF FAIL count same or increasing AND retry_count >= 2:
-        → Invoke Systematic Debugging (see below)
-      → goto LOOP with feedback
-    ELSE:
-      → PIVOT
-
-  IF PIVOT:
-    pivot_count += 1
-    IF pivot_count <= max_pivots:
-      → goto LOOP with pivot direction from evaluator
-    ELSE:
-      → ESCALATE
-
-  IF ESCALATE:
-    Write docs/harness/feedback/sprint-N-escalated.md
-    Log the issue and continue to next sprint
+  1. Read docs/harness/state.md → get next_role
+  2. Read the corresponding SKILL.md:
+     - brainstorm → skills/harness-brainstorm/SKILL.md
+     - review    → (see Review section below)
+     - planner   → skills/harness-planner/SKILL.md
+     - generator → skills/harness-generator/SKILL.md
+     - evaluator → skills/harness-evaluator/SKILL.md
+     - qa        → skills/harness-qa/SKILL.md
+     - ship      → (see Ship section below)
+     - done      → EXIT LOOP
+  3. Follow that skill's instructions completely
+  4. The skill updates state.md with the next next_role when done
+  5. Git commit checkpoint
+  6. Go to step 1
 ```
 
-#### Systematic Debugging (used when evaluator FAIL count is stagnant or increasing)
+Each role reads its input from files written by the previous role. Each role writes its output to files for the next role. This is the "one agent writes a file, another reads it" pattern.
 
-When the generator-evaluator loop is stuck (FAIL count not decreasing after 2+ retries), dispatch an Agent subprocess that follows this pattern:
+### Review Role (built-in)
 
-1. **Phase 1 — Gather Symptoms**: Read the evaluator feedback, error logs, and failing test output. Enumerate every distinct failure.
-2. **Phase 2 — Form Hypothesis**: For each failure, propose the most likely root cause. Rank by probability.
-3. **Phase 3 — Test Minimally**: Change ONE variable at a time. Run the smallest possible verification to confirm or reject the hypothesis.
-4. **Phase 4 — Implement Fix**: Apply the confirmed fix. Re-run the evaluator to verify the FAIL count decreases.
+When next_role is `review`, run three reviews on the spec:
 
-The Agent writes its findings to `docs/harness/feedback/sprint-N-investigation.md` and returns the fix to the generator-evaluator loop.
+**CEO Review** — check config.skills.ceo_review:
+- If set: invoke that skill on the spec
+- If empty, check these yourself:
+  - Is the MVP appropriately scoped?
+  - Are features over/under-scoped?
+  - Is the tech stack realistic?
+  - Missing features that would make it non-viable?
 
-#### Sprint Checkpoint
-After each sprint completes:
-- **Verify artifact existence** (MANDATORY before proceeding):
-  ```
-  Assert file exists: docs/harness/contracts/sprint-N.md
-  Assert file exists: docs/harness/handoff/sprint-N-gen.md
-  Assert file exists: docs/harness/feedback/sprint-N-eval.md
-  Assert "## Judgment" section exists in sprint-N-eval.md
-  ```
-  If any assertion fails, the sprint is NOT complete. Re-run the missing step.
-- **Append to sprint log** (`docs/harness/sprint-log.md`):
-  Parse the evaluator feedback file and append a row:
-  ```
-  | N | PASS/FAIL/ESCALATED | score/10 | retry_count | pivot_count | start_time | end_time | duration | notes |
-  ```
-  - `start_time`: timestamp when Contract phase began for this sprint
-  - `end_time`: timestamp now (checkpoint)
-  - `duration`: difference between start and end
-  - `notes`: if ESCALATED, brief reason; if retries > 0, mention; if pivot, mention direction
-- Update state.md: current_sprint, last_commit, last_evaluator_feedback
-- Git commit checkpoint
+**Design Review** (web apps only) — check config.skills.design_review:
+- If set: invoke that skill
+- If empty: check information hierarchy, interaction states, responsive, accessibility
 
-#### Self-Reset Check
-Every `self_reset_interval` sprints (default: 3):
-1. Save state.md with `status: self_resetting`
-2. Git commit
-3. Run `claude -p "/harness --resume"` via Bash (background)
-4. End current execution (the new session picks up)
+**Engineering Review** — check config.skills.eng_review:
+- If set: invoke that skill
+- If empty: check data model, API design, error handling, security, performance
 
-## Phase 4: QA
+If issues found: update spec, re-review. When all pass: update state.md → `next_role: planner`.
 
-Update state.md: `current_phase: qa`
+### Ship Role (built-in)
 
-Dispatch Agent with `skills/harness-qa/SKILL.md`:
-- Input: config (app_type), spec (user journey)
-- Output: `docs/harness/qa-report.md`
-- If bugs found: auto-fix loop within the agent
+When next_role is `ship`:
 
-Git commit.
+Check config.skills.ship:
+- If set: invoke that skill
+- If empty:
+  1. Run test suite. All tests must pass.
+  2. Create PR via `gh pr create` with summary.
+  3. Display PR URL.
 
-## Phase 5: Ship
-
-Update state.md: `current_phase: ship`
-
-Check `config.skills.ship`:
-- If set (e.g., `ship`): Dispatch Agent with instruction to invoke `Skill("ship")`.
-- If empty: Ship with built-in flow:
-  1. Run the test suite. All tests must pass.
-  2. Create a PR via `gh pr create` with a summary of what was built.
-  3. Display the PR URL.
-
-If the test suite fails, use the Systematic Debugging pattern (Phase 1-4 from above) to fix failures before creating the PR.
-
-## Completion
-
-1. Update state.md: `status: completed`
-2. Remove lock file (`docs/harness/.lock`)
-3. Git commit final state
-4. Display summary (read from `docs/harness/sprint-log.md`):
-
+Display final summary (read from sprint-log.md):
 ```
 Pipeline complete!
 Project: [name]
 Sprints: N completed, M escalated
-Total duration: [sum of all sprint durations]
-Total retries: [sum across all sprints]
-Total commits: [count]
+Total duration: [sum]
+Total retries: [sum]
 QA: [PASS/FAIL]
-PR: [URL if created]
+PR: [URL]
 
 Sprint Log:
-| Sprint | Status    | Score | Retries | Duration |
-|--------|-----------|-------|---------|----------|
-| 1      | PASS      | 8/10  | 0       | 12m      |
-| 2      | PASS      | 7/10  | 1       | 23m      |
-| ...    | ...       | ...   | ...     | ...      |
+| Sprint | Status | Score | Retries | Duration |
+|--------|--------|-------|---------|----------|
+| ...    | ...    | ...   | ...     | ...      |
 ```
+
+Update state.md → `next_role: done`, `status: completed`. Remove lock file. Git commit.
+
+## Rate Limit Handling
+
+The StopFailure hook (`hooks/stop-failure-handler.sh`) handles rate limits:
+1. Detects rate_limit error
+2. Updates state.md to paused
+3. Schedules `claude -p "/harness --resume"` via `at` command
+
+Resume reads state.md and re-enters the role loop at the saved next_role.

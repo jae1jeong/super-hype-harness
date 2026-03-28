@@ -1,13 +1,13 @@
 {
   "name": "super-hype-harness",
-  "description": "Long-running app development harness: Planner → Generator → Evaluator pipeline with context reset and skill orchestration",
-  "version": "0.3.2",
+  "description": "Long-running app development harness with file-based handoff: Generator builds, Evaluator screenshots and tests, all in one continuous session",
+  "version": "0.4.0",
   "author": {
     "name": "jaewon"
   },
   "repository": "https://github.com/jae1jeong/super-hype-harness",
   "license": "MIT",
-  "keywords": ["harness", "pipeline", "long-running", "generator", "evaluator", "orchestration"],
+  "keywords": ["harness", "pipeline", "long-running", "generator", "evaluator", "file-handoff"],
   "hooks": {
     "StopFailure": [
       {

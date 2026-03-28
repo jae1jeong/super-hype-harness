@@ -2,30 +2,34 @@
 
 > This file enables Codex CLI compatibility. For Claude Code, use `/harness` directly.
 
+## Architecture
+
+File-based handoff between agents. No central orchestrator. Each agent reads `docs/harness/state.md` to know its role, does work, writes output files, and updates `next_role`.
+
 ## Skills
 
-This project includes harness pipeline skills in `skills/` directory.
-Codex users: copy or symlink skills to `.agents/skills/` to use them.
+Skills in `skills/` directory. Codex users: symlink to `.agents/skills/`.
 
 ```bash
-# Quick setup for Codex
 ln -s ./skills .agents/skills
 ```
 
 ## Available Commands
 
-- `/harness "app description"` — Run the full pipeline (brainstorm → review → plan → build → QA → ship)
+- `/harness "app description"` — Run the full pipeline
+- `/harness "app" --ref https://example.com` — With reference site
 - `/harness --resume` — Resume a paused pipeline
-- `/harness --status` — Show pipeline progress
+- `/harness-status` — Show pipeline progress
 
 ## How It Works
 
-The harness orchestrates long-running app development through:
-1. **Brainstorm** — Interactive Q&A to flesh out your app idea
-2. **Review** — Scope review + engineering review (internalized patterns)
-3. **Plan** — Decompose spec into sprints with testable contracts
-4. **Build** — Generator implements, Evaluator verifies (GAN-inspired loop)
-5. **QA** — Full app verification based on app_type (web/cli/library)
-6. **Ship** — Test suite + PR creation
+1. **Bootstrap** — Create dirs, config, state.md
+2. **Brainstorm** — Interactive Q&A → spec document
+3. **Review** — Scope + engineering + design review
+4. **Plan** — Spec → sprints with testable criteria
+5. **Build** — Generator proposes contract, implements, self-evaluates, writes handoff
+6. **Evaluate** — Evaluator opens app, screenshots, studies, tests, writes feedback + judgment
+7. **QA** — Full app verification
+8. **Ship** — Tests + PR creation
 
-Each phase runs in an isolated context to prevent quality degradation on long tasks.
+Communication via files in `docs/harness/`. State transitions via `state.md`.
