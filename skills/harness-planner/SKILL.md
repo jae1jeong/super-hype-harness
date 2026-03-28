@@ -1,14 +1,14 @@
 ---
 name: harness-planner
-description: Decomposes a reviewed spec into executable sprints with testable completion criteria.
-allowed-tools: [Read, Write, Glob, Grep]
+description: Expands a reviewed spec into a full product spec with visual design language. No sprint decomposition — the Generator builds everything at once.
+allowed-tools: [Read, Write, Glob, Grep, WebFetch]
 ---
+
+> "The planner step expanded that prompt into a 16-feature spec spread across ten sprints" "gave the planner access to our frontend design skill, which it read and used to create a visual design language for the app as part of the spec." — Anthropic
 
 # Harness Planner
 
-Converts a reviewed spec into a sprint plan. Each sprint = one feature at a time.
-
-> "The planner took a simple 1-4 sentence prompt and expanded it into a full product spec... a 16-feature spec spread across ten sprints." — Anthropic
+Expands the reviewed spec into a detailed, implementation-ready product spec. Creates a visual design language. Does NOT decompose into sprints — the Generator builds everything in one pass.
 
 ## Input
 
@@ -17,78 +17,78 @@ If references exist (`has_references: true`), read `docs/harness/references/inde
 
 ## Process
 
-1. Analyze the spec for feature scope, tech stack, and dependencies
-2. If references exist: plan sprints to progressively match the reference (layout first, then features, then polish)
-3. Decompose into 5-15 sprints (typical range)
-4. Order by dependency: infrastructure first, features second, polish last
-5. Each sprint should be completable in one Generator pass
+### 1. Read Frontend Design Skill (web apps)
 
-## Sprint Structure
+> "gave the planner access to our frontend design skill"
 
-For each sprint:
+For web apps, fetch and read the frontend design skill for design guidance:
+```
+https://github.com/anthropics/claude-code/blob/main/plugins/frontend-design/skills/frontend-design/SKILL.md
+```
 
-### Goal
-One sentence describing what this sprint delivers.
+Use its principles to create a visual design language for this app.
 
-### Done Definition
-Testable checklist items. Each must be verifiable:
-- Build/test commands with expected output
-- API endpoints with expected responses
-- UI elements that should be visible/interactive
+### 2. Expand the Spec
 
-### Verification Method
-How to verify each Done item:
-- `build`: run build command, check exit code 0
-- `test`: run test command, check all pass
-- `api`: curl endpoint, check response
-- `browser`: navigate to URL, check element exists
-- `cli`: run command, check output
+Take the brainstorm spec and expand it into a full implementation-ready product spec:
 
-### Dependencies
-Which previous sprints must be complete.
+- **Feature list** with detailed descriptions (aim for 10-20 features)
+- **Visual design language**: color palette, typography scale, spacing system, component style, mood/identity
+- **Data model**: entities, relationships, fields
+- **API design**: endpoints, methods, request/response shapes
+- **Key screens**: detailed layout descriptions
+- **User flows**: step-by-step interaction sequences
+- **AI integration points**: if applicable, how the LLM agent drives functionality via tools
+
+### 3. Reference Integration (if references exist)
+
+Study reference images and incorporate:
+- Layout patterns to replicate
+- Color scheme to match or adapt
+- Typography and spacing patterns
+- Interaction patterns observed
 
 ## Output
 
 Write to `docs/harness/plans/YYYY-MM-DD-plan.md`:
 
 ```markdown
-# Sprint Plan: [Project Name]
+# Product Plan: [Project Name]
 
-## Overview
-- Total sprints: N
-- Tech stack: [...]
-- Dependency graph: Sprint 1 → Sprint 2 → ...
-
-## Sprint 1: [Title]
-### Goal
-[one sentence]
-### Done Definition
-- [ ] [testable criterion 1]
-- [ ] [testable criterion 2]
-### Verification Method
-- [method for each criterion]
-### Dependencies
-- None (first sprint)
-
-## Sprint 2: [Title]
+## Feature List
+1. [Feature]: [detailed description]
+2. [Feature]: [detailed description]
 ...
+
+## Visual Design Language
+- **Palette**: [primary, secondary, accent, background, text colors]
+- **Typography**: [font family, scale: h1/h2/h3/body/caption sizes]
+- **Spacing**: [base unit, scale]
+- **Component style**: [rounded/sharp, shadow depth, border style]
+- **Mood**: [description of the visual identity]
+
+## Data Model
+[entities and relationships]
+
+## API Design
+[endpoints with methods and shapes]
+
+## Key Screens
+[detailed layout for each screen]
+
+## User Flows
+[step-by-step sequences]
+
+## AI Integration (if applicable)
+[how LLM agent works within the app]
 ```
 
-## Guidelines
-
-- Sprint 1 is ALWAYS project scaffolding + dev environment
-- Last sprint is ALWAYS polish + final integration
-- Each sprint should produce a working (if incomplete) app
-- Prefer small sprints over large ones
-
-Git commit the plan file.
+Git commit.
 
 ## Handoff
 
-After writing the plan:
-1. Update `docs/harness/state.md`:
-   - `plan: docs/harness/plans/YYYY-MM-DD-plan.md`
-   - `total_sprints: N`
-   - `current_sprint: 1`
-   - `next_role: generator`
-2. Announce: "Plan 작성 완료 (N sprints). state.md에 따라 generator 단계로 진행합니다."
+Update `docs/harness/state.md`:
+- `plan: docs/harness/plans/YYYY-MM-DD-plan.md`
+- `next_role: contract`
+
+Announce: "Plan 작성 완료. 계약 협상으로 진행합니다."

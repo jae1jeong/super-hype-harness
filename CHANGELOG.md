@@ -8,26 +8,23 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [0.4.0] - 2026-03-29
 
 ### Changed (BREAKING)
-- **오케스트레이터 제거 → 파일 기반 핸드오프** — Anthropic 원문 아키텍처와 동일하게 변경
-  - 중앙 오케스트레이터(Agent subprocess dispatch) 제거
-  - 하나의 연속 세션에서 역할 루프로 진행
-  - 각 역할이 state.md의 `next_role`을 읽고 → 작업 → 다음 역할 기록
-  - "one agent writes a file, another reads it"
-- **Generator가 직접 계약 제안** — 별도 Contract Agent 제거, Generator가 계약 작성 후 Evaluator가 검증
-- **Evaluator가 판단 로직 소유** — RETRY/PIVOT/ESCALATE 판단 + state.md 업데이트 + sprint-log 기록을 Evaluator 내부로 이동
-- **Self-Reset 제거** — 연속 세션 + 자동 compaction 사용
-- harness-contract 스킬이 참조 문서로 변경 (별도 에이전트가 아님)
+- **Anthropic V2 아키텍처로 전면 전환** — 원문 최신 버전과 동일한 프로세스
+  - 오케스트레이터 제거 → 파일 기반 핸드오프 + 역할 루프
+  - **스프린트 제거** → 빌드→QA 라운드 방식 (Generator가 전체 빌드, Evaluator가 한 번에 테스트)
+  - 하나의 연속 세션, Agent subprocess 없음, 자동 compaction 사용
+  - sprint-log.md → build-log.md (라운드별 기록)
+  - RETRY/PIVOT/ESCALATE → 단순 PASS/FAIL + 라운드 반복
+- **계약 협상** — Generator가 제안, Evaluator가 리뷰, 합의할 때까지 반복
+- **Planner에 frontend design skill 참조** — 비주얼 디자인 언어를 spec에 포함
+- **Evaluator가 판단 + state.md 업데이트 소유**
+- **QA가 Evaluator에 통합** — 별도 QA 단계 제거, Evaluator가 매 라운드 끝에 전체 테스트
 
 ### Added
-- **레퍼런스 시스템** — `--ref <url-or-image>` 옵션으로 참조 사이트/이미지 제공
-  - URL: agent-browser로 스크린샷 캡처 → docs/harness/references/
-  - 이미지: 복사 → docs/harness/references/
-  - Generator가 레퍼런스를 참고해서 구현
-  - Evaluator가 레퍼런스와 비교 평가
-- **스크린샷 시각 분석** — Evaluator가 agent-browser screenshot 후 Read 도구로 이미지를 열어 시각적 분석
-- **하드 임계값 스코어링** — "if any one criterion fell below it, the sprint failed"
-- **Few-shot 평가 캘리브레이션** — 점수 9/6/3 예시 추가
-- 평가 기준에 Anthropic 원문 직접 인용 추가
+- **레퍼런스 시스템** — `--ref <url-or-image>`로 참조 사이트/이미지 제공
+- **스크린샷 시각 분석** — agent-browser screenshot 후 Read 도구로 이미지 열어 분석
+- **하드 임계값 스코어링** + few-shot 캘리브레이션
+- 평가 기준에 Anthropic 원문 직접 인용 (design quality, originality, craft, functionality)
+- 평가 기준에 "be skeptical" 경고 — Claude가 자연적으로 긍정 편향되는 것 방지
 
 ## [0.3.2] - 2026-03-29
 

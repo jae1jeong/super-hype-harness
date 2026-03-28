@@ -4,53 +4,38 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Super Hype Harness is a **Claude Code plugin** for long-running app development using file-based handoff between agents: Brainstorm → Review → Plan → Generator ↔ Evaluator → QA → Ship.
+Super Hype Harness is a **Claude Code plugin** for long-running app development. File-based handoff between Planner, Generator, and Evaluator in one continuous session. No sprints — the Generator builds everything, then the Evaluator tests in a single pass.
 
-Version 0.4.0. It is a skill-only project — no build step, no test suite, no compiled output. All logic lives in SKILL.md files.
+Version 0.4.0. Skill-only project — no build step, no test suite. All logic in SKILL.md files.
 
-## Architecture — File-Based Handoff
+## Architecture — Anthropic V2
 
-> "Communication was handled via files: one agent would write a file, another agent would read it." — Anthropic
+> "I started by removing the sprint construct entirely." "Communication was handled via files."
 
-- **No orchestrator**. `/harness` bootstraps (dirs, config, state.md), then enters a role loop.
-- **One continuous session**. No Agent subprocesses for phase transitions. Automatic compaction handles context growth.
-- **state.md is the coordination mechanism**. Each role reads `next_role`, does its work, updates `next_role` for the next role.
-- **Generator proposes contracts**. The Generator writes what it will build and how to verify it. The Evaluator tests against that contract.
-- **Evaluator owns judgment logic**. RETRY/PIVOT/ESCALATE decisions, sprint-log recording, and state.md updates all happen in the Evaluator.
+- **No orchestrator, no sprints**. `/harness` bootstraps, then a role loop reads `state.md` → executes role → updates `next_role`.
+- **Build → QA rounds**. Generator builds entire app → Evaluator tests → if FAIL, Generator fixes → Evaluator re-tests (up to max_rounds).
+- **Contract negotiation**. Generator proposes what to build, Evaluator reviews, iterate until agreed.
+- **Screenshot-and-study**. Evaluator takes screenshots, reads them with Read tool for visual analysis.
+- **Planner creates visual design language** using frontend design skill reference.
 
 ## Repository Structure
 
-- `skills/` — Pipeline role skills (harness bootstrapper, brainstorm, planner, generator, evaluator, QA, resume, status, contract reference)
+- `skills/` — Pipeline role skills
 - `generators/` — Generator presets (default, frontend)
 - `evaluators/` — Evaluator presets (default, browser-qa, design-qa)
-- `hooks/stop-failure-handler.sh` — StopFailure hook for rate-limit auto-resume
-- `.claude-plugin/` — Plugin manifest and marketplace listing
+- `hooks/stop-failure-handler.sh` — Rate-limit auto-resume hook
+- `.claude-plugin/` — Plugin manifest
 
-## Key Design Decisions
-
-1. **File-based handoff** — agents communicate by writing/reading markdown files in `docs/harness/`
-2. **Screenshot-and-study evaluation** — Evaluator takes screenshots with agent-browser, then reads them with the Read tool for visual analysis
-3. **Hard thresholds** — each contract criterion is pass/fail, any single failure = sprint fails
-4. **Reference system** — `--ref <url-or-image>` provides visual targets for Generator to match
-5. **GAN-inspired loop** — Generator builds, Evaluator finds bugs, Generator fixes. Adversarial separation.
-
-## Development Commands
-
-No build or test commands — pure SKILL.md plugin:
+## Development
 
 ```bash
 claude plugins install /path/to/super-hype-harness
-# In Claude Code: /reload-plugins
-# Test: /harness "test app idea"
-cat .claude-plugin/plugin.json | jq .version
+# /reload-plugins, then /harness "test idea"
 ```
 
 ## Version Bumping
 
-Update ALL of these:
-1. `.claude-plugin/plugin.json` — `"version"` field
-2. `.claude-plugin/marketplace.json` — `"version"` field
-3. `CHANGELOG.md` — add new version entry
+Update: `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `CHANGELOG.md`.
 
 ## Language
 
