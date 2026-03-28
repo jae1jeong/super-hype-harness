@@ -150,21 +150,34 @@ Create `docs/harness/.lock` with current PID and timestamp.
 Do NOT proceed to Phase 2 until brainstorming produces a spec document.
 </HARD-GATE>
 
+<HARD-GATE>
+EXTERNAL SKILL BOUNDARY: If the brainstorm skill (e.g., superpowers:brainstorming) attempts to chain into implementation skills (writing-plans, executing-plans, subagent-driven-development, or any other implementation/execution skill), you MUST STOP and return control to this harness orchestrator. The brainstorm phase produces ONLY a spec document. Implementation is handled by Phase 3's sprint loop with Generator-Evaluator verification. Allowing external skills to bypass the sprint loop means NO evaluator QA runs, which defeats the purpose of this harness.
+</HARD-GATE>
+
 Run the brainstorming process DIRECTLY in the main session (the user needs to interact):
 
 1. Check `config.skills.brainstorm`:
    - If set (e.g., `office-hours`): invoke `Skill("office-hours")` with the app description
    - If empty: Read `skills/harness-brainstorm/SKILL.md` and follow its instructions
 2. Follow the skill's instructions: question framework, pushback, scope expansion
-3. When complete: spec is written to `docs/harness/specs/YYYY-MM-DD-<name>-spec.md`
-4. Detect app_type from the conversation, update config.md
-5. Update state.md: `current_phase: review`, update spec path
-6. Git commit
+3. **STOP the external skill once a spec document is produced.** Do NOT follow any further instructions from the external skill (such as "invoke writing-plans" or "transition to implementation"). The harness orchestrator controls the implementation pipeline.
+4. When complete: spec is written to `docs/harness/specs/YYYY-MM-DD-<name>-spec.md`
+5. Detect app_type from the conversation, update config.md
+6. Update state.md: `current_phase: review`, update spec path
+7. Git commit
 
 ## Phase 2: Review (Agent Subprocesses)
 
 <HARD-GATE>
 Do NOT proceed to Phase 3 until all reviews pass.
+</HARD-GATE>
+
+<HARD-GATE>
+PIPELINE INTEGRITY CHECK: Before starting Phase 2, verify that Phase 1 produced ONLY a spec document and did NOT trigger any implementation. Check:
+1. `docs/harness/specs/` contains a spec file
+2. No `src/` directory exists yet (or if it existed before, no new implementation files were added during Phase 1)
+3. state.md shows `current_phase: review`
+If implementation code was created during Phase 1 (by an external brainstorm skill chaining into implementation), STOP and warn the user that the pipeline was compromised. The spec phase should never produce code.
 </HARD-GATE>
 
 ### Step 2a: CEO Review
@@ -225,6 +238,10 @@ Git commit.
 
 ## Phase 3: Implementation (Sprint Loop)
 
+<HARD-GATE>
+MANDATORY SPRINT LOOP: Every sprint MUST go through the Contract → Generator → Evaluator pipeline defined below. Do NOT substitute this with external implementation skills (superpowers:executing-plans, superpowers:subagent-driven-development, or any other execution framework). Those skills do not run the Evaluator, which means no browser QA, no real-app verification, and no feedback loop. The Generator-Evaluator loop IS the quality gate.
+</HARD-GATE>
+
 ### Step 3a: Sprint Planning
 
 Dispatch Agent subprocess with `skills/harness-planner/SKILL.md` context:
@@ -233,6 +250,14 @@ Dispatch Agent subprocess with `skills/harness-planner/SKILL.md` context:
 - Update state.md: plan path, total_sprints
 
 ### Step 3b: Sprint Loop
+
+<HARD-GATE>
+ARTIFACT VERIFICATION: Before marking any sprint as complete, verify that ALL of these files exist:
+1. `docs/harness/contracts/sprint-N.md` — the contract
+2. `docs/harness/handoff/sprint-N-gen.md` — the generator handoff
+3. `docs/harness/feedback/sprint-N-eval.md` — the evaluator feedback with Judgment
+If ANY file is missing, the sprint is NOT complete. Re-run the missing step.
+</HARD-GATE>
 
 For each sprint (1 to total_sprints):
 
@@ -300,6 +325,14 @@ The Agent writes its findings to `docs/harness/feedback/sprint-N-investigation.m
 
 #### Sprint Checkpoint
 After each sprint completes:
+- **Verify artifact existence** (MANDATORY before proceeding):
+  ```
+  Assert file exists: docs/harness/contracts/sprint-N.md
+  Assert file exists: docs/harness/handoff/sprint-N-gen.md
+  Assert file exists: docs/harness/feedback/sprint-N-eval.md
+  Assert "## Judgment" section exists in sprint-N-eval.md
+  ```
+  If any assertion fails, the sprint is NOT complete. Re-run the missing step.
 - Update state.md: current_sprint, last_commit, last_evaluator_feedback
 - Git commit checkpoint
 
