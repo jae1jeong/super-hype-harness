@@ -34,7 +34,19 @@ docs/harness/handoff/
 docs/harness/feedback/
 ```
 
-### 2. Config (docs/harness/config.md)
+### 2. Sprint Log (docs/harness/sprint-log.md)
+
+Create initial sprint log:
+```markdown
+# Sprint Log
+
+| Sprint | Status | Score | Retries | Pivots | Started | Finished | Duration | Notes |
+|--------|--------|-------|---------|--------|---------|----------|----------|-------|
+```
+
+This log is appended after each sprint completes. It provides at-a-glance project health.
+
+### 3. Config (docs/harness/config.md)
 
 If config.md doesn't exist, run the **Skill Onboarding** flow (see below), then create config with defaults + selected skills:
 ```yaml
@@ -117,7 +129,7 @@ skills:
 
 If user chose built-in for a category, leave the value empty.
 
-### 3. State (docs/harness/state.md)
+### 4. State (docs/harness/state.md)
 
 Create initial state:
 ```yaml
@@ -140,7 +152,7 @@ resume_attempts: 0
 - config: docs/harness/config.md
 ```
 
-### 4. Lock File
+### 5. Lock File
 
 Create `docs/harness/.lock` with current PID and timestamp.
 
@@ -261,6 +273,9 @@ If ANY file is missing, the sprint is NOT complete. Re-run the missing step.
 
 For each sprint (1 to total_sprints):
 
+#### Sprint Start
+Record the current timestamp as `sprint_start_time` (used for duration tracking in sprint log).
+
 #### StatusLine Sentry (Rate Limit Pre-Detection)
 Before each sprint, if possible, check rate limit usage. If approaching 90%: complete current sprint, then pause (save state with reason: preemptive_pause, schedule resume).
 
@@ -333,6 +348,15 @@ After each sprint completes:
   Assert "## Judgment" section exists in sprint-N-eval.md
   ```
   If any assertion fails, the sprint is NOT complete. Re-run the missing step.
+- **Append to sprint log** (`docs/harness/sprint-log.md`):
+  Parse the evaluator feedback file and append a row:
+  ```
+  | N | PASS/FAIL/ESCALATED | score/10 | retry_count | pivot_count | start_time | end_time | duration | notes |
+  ```
+  - `start_time`: timestamp when Contract phase began for this sprint
+  - `end_time`: timestamp now (checkpoint)
+  - `duration`: difference between start and end
+  - `notes`: if ESCALATED, brief reason; if retries > 0, mention; if pivot, mention direction
 - Update state.md: current_sprint, last_commit, last_evaluator_feedback
 - Git commit checkpoint
 
@@ -372,13 +396,22 @@ If the test suite fails, use the Systematic Debugging pattern (Phase 1-4 from ab
 1. Update state.md: `status: completed`
 2. Remove lock file (`docs/harness/.lock`)
 3. Git commit final state
-4. Display summary:
+4. Display summary (read from `docs/harness/sprint-log.md`):
 
 ```
 Pipeline complete!
 Project: [name]
 Sprints: N completed, M escalated
+Total duration: [sum of all sprint durations]
+Total retries: [sum across all sprints]
 Total commits: [count]
 QA: [PASS/FAIL]
 PR: [URL if created]
+
+Sprint Log:
+| Sprint | Status    | Score | Retries | Duration |
+|--------|-----------|-------|---------|----------|
+| 1      | PASS      | 8/10  | 0       | 12m      |
+| 2      | PASS      | 7/10  | 1       | 23m      |
+| ...    | ...       | ...   | ...     | ...      |
 ```

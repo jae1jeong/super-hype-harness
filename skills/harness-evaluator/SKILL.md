@@ -34,18 +34,29 @@ The Generator says it implemented feature X. Your job: open the app, try feature
 
 This is the primary evaluation mode. You MUST use agent-browser to test the actual running app.
 
-#### Step 1: Start the app
+#### Step 1: Ensure agent-browser is installed (MANDATORY)
+
+<HARD-GATE>
+agent-browser is REQUIRED for web app evaluation. Do NOT fall back to curl-only testing.
+</HARD-GATE>
+
+```bash
+# Check and install if missing
+which agent-browser || npm install -g agent-browser
+agent-browser install 2>/dev/null || true   # Ensure Chrome is downloaded
+```
+
+If installation fails, STOP and report: "BLOCKED: agent-browser installation failed. Cannot evaluate web app without browser testing."
+
+#### Step 2: Start the app
 
 Start the project's dev server in the background using Bash. Wait for it to respond (poll with curl, max 30 seconds). The exact start command depends on the project (check package.json scripts).
 
-#### Step 2: Browser-based QA with agent-browser
+#### Step 3: Browser-based QA with agent-browser
 
 Use [agent-browser](https://github.com/vercel-labs/agent-browser) CLI to interact with the app like a real user:
 
 ```bash
-# Install if needed (one-time)
-which agent-browser || npm install -g agent-browser
-
 # Open the app
 agent-browser open http://localhost:3000
 
@@ -61,7 +72,19 @@ agent-browser screenshot            # Capture evidence
 agent-browser console
 ```
 
-#### Step 3: Test each contract criterion
+#### Step 4: Free exploration (BEFORE contract testing)
+
+> "The evaluator would navigate the page on its own, screenshotting and carefully studying the implementation before producing its assessment." — Anthropic
+
+Before checking any contract criterion:
+1. **Freely navigate the entire app** — visit every page, not just the ones in the contract
+2. **Screenshot key pages** — capture the actual state of each major view
+3. **Check console** — note any errors, warnings, failed network requests
+4. **Form initial impressions** — note anything that feels off, broken, or stub-like
+
+This exploration informs your evaluation and catches issues that narrow contract testing would miss.
+
+#### Step 5: Test each contract criterion
 
 For EACH criterion in the sprint contract:
 
@@ -69,25 +92,28 @@ For EACH criterion in the sprint contract:
 2. **Perform the action** described in the criterion (click button, submit form, call API)
 3. **Verify the result** -- does the UI show the expected state? Does the data persist?
 4. **Check for bugs:**
-   - Does the feature actually work end-to-end?
-   - What happens with empty input? Invalid input?
+   - Does the feature actually work end-to-end? (not just "button exists" but "button does the thing")
+   - Is the feature real or a stub? (hardcoded data, no-op handlers, fake responses)
+   - What happens with empty input? Invalid input? Long text?
    - Does the UI update correctly after actions?
    - Are there console errors?
    - Does navigation work (back button, direct URL)?
+   - Does data persist across page refreshes?
 5. **Screenshot** as evidence for PASS or FAIL
 
-#### Step 4: Stop the app
+#### Step 6: Assess product depth and design (web apps)
+
+After contract testing, evaluate advisory dimensions (see `references/evaluation-criteria.md`):
+- **Product depth**: Are features real or stubs? Complete or skeleton?
+- **Visual design**: Information hierarchy, typography, spacing, AI slop detection
+- **Interaction quality**: Feedback, error handling, navigation flow
+- **Console health**: Errors, failed requests, performance issues
+
+These do NOT affect PASS/RETRY judgment but are reported in feedback for the Generator to improve.
+
+#### Step 7: Stop the app
 
 Kill the dev server process when evaluation is complete.
-
-#### Fallback (agent-browser not installed)
-
-If agent-browser is not available:
-1. Start dev server
-2. Use `curl` to test API endpoints
-3. Verify build succeeds
-4. Note in feedback: "DEGRADED: Browser QA unavailable. Only API/build verification performed. Install agent-browser for full evaluation."
-5. This is NOT a full PASS -- mark any browser-only criteria as UNTESTED
 
 ### For CLI apps (app_type: cli)
 
@@ -144,6 +170,12 @@ Write feedback to `docs/harness/feedback/sprint-N-eval.md`:
 ## Retry Count: N / max_retries
 ## Pivot Count: N / max_pivots
 
+## Free Exploration Notes
+- Pages discovered: [list of all pages/routes visited]
+- First impressions: [what stands out, what feels off]
+- Console errors on load: [count and details]
+- Screenshots: [paths to exploration screenshots]
+
 ## Contract Verification
 - [PASS] Criterion 1: [evidence -- what I did, what happened, screenshot if applicable]
 - [FAIL] Criterion 2: [what I tried, what I expected, what actually happened, steps to reproduce]
@@ -156,14 +188,25 @@ Write feedback to `docs/harness/feedback/sprint-N-eval.md`:
    - Actual: [what actually happened]
    - Evidence: [command output, screenshot path]
 
+## Product Depth (advisory)
+- Stub detection: [any features that look real but are fake/hardcoded?]
+- Completeness: [do features work end-to-end or only the happy path?]
+- Edge cases: [empty states, error states, boundary conditions]
+
+## Visual & Interaction Quality (advisory, web apps only)
+- Design: [hierarchy, typography, spacing, color]
+- AI slop: [generic gradients, default component library look, stock placeholders?]
+- Interactions: [feedback on actions, loading states, transitions]
+- Navigation: [back button, direct URL access, breadcrumbs]
+
 ## Browser QA Summary (web apps only)
 - Pages tested: [list]
 - Interactions tested: [list]
 - Console errors: [count and details]
-- agent-browser used: [yes/no/degraded]
+- Failed network requests: [count and details]
 
 ## Recommended Actions
-- [specific fix direction for Generator -- be concrete]
+- [specific fix direction for Generator -- be concrete, reference exact files/components]
 
 ## Judgment: [PASS | RETRY | PIVOT | ESCALATE]
 ```

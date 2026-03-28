@@ -35,7 +35,7 @@ Final quality assurance after all sprints complete. Runs as Agent subprocess.
    - Screenshot before/after for evidence
 4. Stop dev server when done
 
-If agent-browser is not installed, fall back to curl-based verification and note "DEGRADED" in QA report.
+agent-browser is REQUIRED for web app QA. If not installed, run `npm install -g agent-browser && agent-browser install` before proceeding. Do NOT fall back to curl-only testing.
 
 ### cli
 1. Build the project
