@@ -18,6 +18,7 @@ Builds the entire app from the spec. No sprints — implement everything in one 
 4. If round > 1: read Evaluator feedback `docs/harness/feedback/round-N-eval.md`
 5. If references exist: read `docs/harness/references/index.md` and reference images (use Read tool — Claude can see images)
 6. If custom generator profile in config: read `generators/<name>/SKILL.md`
+7. **Read `generator_skills` from config.md** — for each listed skill, invoke `Skill("<skill-name>")` to load its guidelines. Follow these skills' patterns during implementation. Defaults for web apps: `frontend-design`, `vercel-react-best-practices`.
 
 ## Process
 

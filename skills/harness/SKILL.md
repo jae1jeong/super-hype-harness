@@ -73,6 +73,11 @@ skills:
   debug:
   code_review:
   ship:
+
+# Generator가 빌드 시 참조할 스킬 (app_type: web일 때 기본 적용)
+generator_skills:
+  - frontend-design          # Anthropic frontend design skill
+  - vercel-react-best-practices  # Vercel/React best practices
 ```
 
 ### 4. Build Log (docs/harness/build-log.md)
