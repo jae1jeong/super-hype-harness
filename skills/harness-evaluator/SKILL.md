@@ -37,16 +37,51 @@ You may write to `docs/harness/` files only. Do NOT modify source code.
 
 ### For web apps (app_type: web)
 
-#### Step 1: Ensure agent-browser (MANDATORY)
+#### Step 1: Ensure Browser Testing Tool (MANDATORY)
 
 <HARD-GATE>
-agent-browser is REQUIRED. No curl fallback.
+웹앱은 반드시 브라우저에서 실제로 테스트해야 합니다. 코드리뷰만으로는 PASS 불가.
 </HARD-GATE>
 
+**agent-browser 우선, 없으면 Playwright MCP fallback:**
+
 ```bash
-which agent-browser || npm install -g agent-browser
-agent-browser install 2>/dev/null || true
+# 1차: agent-browser 확인
+if which agent-browser > /dev/null 2>&1; then
+  BROWSER_TOOL="agent-browser"
+else
+  # 2차: agent-browser 설치 시도
+  npm install -g agent-browser 2>/dev/null && agent-browser install 2>/dev/null
+  if which agent-browser > /dev/null 2>&1; then
+    BROWSER_TOOL="agent-browser"
+  else
+    # 3차: Playwright MCP fallback
+    BROWSER_TOOL="playwright"
+  fi
+fi
 ```
+
+If using **agent-browser**:
+```bash
+agent-browser open <url>
+agent-browser snapshot          # Page structure + element refs
+agent-browser click "@e1"       # Click by ref
+agent-browser fill "@e3" "text" # Fill input
+agent-browser screenshot        # Capture evidence
+agent-browser console           # JS errors
+```
+
+If using **Playwright MCP** (fallback):
+```
+mcp__playwright__browser_navigate → open URL
+mcp__playwright__browser_snapshot → page structure + element refs
+mcp__playwright__browser_click → click element
+mcp__playwright__browser_fill_form → fill input
+mcp__playwright__browser_take_screenshot → capture evidence
+mcp__playwright__browser_console_messages → JS errors
+```
+
+Both tools produce the same result: real browser interaction + screenshots + console errors.
 
 #### Step 2: Start the app
 
@@ -56,16 +91,18 @@ Read dev server command from handoff. Start in background, poll until ready (max
 
 > "The evaluator would navigate the page on its own, screenshotting and carefully studying the implementation before producing its assessment."
 
-1. `agent-browser open http://localhost:PORT`
-2. `agent-browser snapshot` → read page structure
-3. `agent-browser screenshot` → save file
+Using whichever browser tool is available:
+
+1. **Open the app** at http://localhost:PORT
+2. **Snapshot** → read page structure
+3. **Screenshot** → save file
 4. **Read the screenshot with the Read tool** — Claude can see images. Study layout, design, content.
-5. Navigate to every page/route you can find:
-   - `agent-browser snapshot` → find links
-   - `agent-browser click` → navigate
-   - `agent-browser screenshot` → capture
+5. **Navigate to every page/route** you can find:
+   - Snapshot → find links
+   - Click → navigate
+   - Screenshot → capture
    - **Read each screenshot** → study
-6. `agent-browser console` → note errors, warnings, failed requests
+6. **Check console** → note errors, warnings, failed requests
 7. Form first impressions before testing criteria
 
 #### Step 4: Reference Comparison (if references exist)

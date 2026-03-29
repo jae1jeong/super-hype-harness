@@ -19,7 +19,7 @@ Same as the Evaluator's process — see `skills/harness-evaluator/SKILL.md`.
 
 1. Read config for app_type
 2. Read spec for user journey
-3. For web apps: agent-browser is REQUIRED
+3. For web apps: browser testing is REQUIRED (agent-browser first, Playwright MCP fallback — see evaluator SKILL.md Step 1)
 4. Screenshot and study every page
 5. Test all user flows from the spec
 6. Reference comparison if applicable
