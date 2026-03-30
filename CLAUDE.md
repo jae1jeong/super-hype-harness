@@ -4,19 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Super Hype Harness is a **Claude Code plugin** for long-running app development. File-based handoff between Planner, Generator, and Evaluator in one continuous session. No sprints — the Generator builds everything, then the Evaluator tests in a single pass.
+Super Hype Harness is a **Claude Code plugin** for long-running app development. Agent subprocess per phase (context reset) + Build/QA rounds + config-based skill whitelist.
 
-Version 0.4.0. Skill-only project — no build step, no test suite. All logic in SKILL.md files.
+Version 0.5.0. Skill-only project — no build step, no test suite. All logic in SKILL.md files.
 
-## Architecture — Anthropic V2
+## Architecture — V3 (Agent subprocess + Build/QA rounds)
 
-> "I started by removing the sprint construct entirely." "Communication was handled via files."
-
-- **No orchestrator, no sprints**. `/harness` bootstraps, then a role loop reads `state.md` → executes role → updates `next_role`.
-- **Build → QA rounds**. Generator builds entire app → Evaluator tests → if FAIL, Generator fixes → Evaluator re-tests (up to max_rounds).
-- **Contract negotiation**. Generator proposes what to build, Evaluator reviews, iterate until agreed.
-- **Screenshot-and-study**. Evaluator takes screenshots, reads them with Read tool for visual analysis.
-- **Planner creates visual design language** using frontend design skill reference.
+- **Agent subprocess per phase** — each phase runs in isolated context (fresh start). Orchestrator dispatches and reads file outputs only.
+- **Build/QA rounds** — Generator builds entire app, Evaluator tests in single pass. FAIL -> fix -> re-test. No sprints.
+- **Skill whitelist** — config.skills controls which skills sub-agents can use. External skill chaining blocked.
+- **Contract negotiation** — Generator proposes, Evaluator reviews, iterate until agreed.
+- **Screenshot-and-study** — Evaluator takes screenshots, reads them with Read tool for visual analysis.
 
 ## Repository Structure
 

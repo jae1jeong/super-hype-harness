@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-03-30
+
+### Changed (BREAKING)
+- **Agent 서브프로세스 복원** — 각 phase가 독립 Agent에서 실행 (context reset)
+  - v0.4.0의 단일 세션 Role Loop 제거
+  - 오케스트레이터는 Agent 디스패치 + 파일 읽기 + 판정만 수행 (context 최소화)
+  - Brainstorm만 메인 세션 (사용자 대화 필요)
+- **Build/QA 라운드 유지** (v0.4.0에서 가져옴) — 스프린트 없이 전체 빌드 후 QA
+
+### Added
+- **스킬 화이트리스트 강제** — config.skills에 명시된 스킬만 서브에이전트가 사용 가능
+- **EXTERNAL SKILL BOUNDARY** — 외부 스킬이 다른 스킬로 체이닝하는 것 차단 (brainstorm -> writing-plans 등)
+- **SKILL RESTRICTION 프롬프트** — 모든 Agent 디스패치 시 허용 스킬 목록 명시
+- v0.4.0의 모든 품질 개선 유지: agent-browser 강제, Playwright MCP fallback, 스크린샷 시각 분석, Explore First/Judge Second, 5개 평가 차원, AI slop/Stub 탐지, be skeptical, 하드 임계값 스코어링, 레퍼런스 시스템, 계약 협상, build-log.md
+
+### Architecture
+```
+v0.3.0: Agent subprocess + Sprint Loop
+v0.4.0: Single session + Build/QA rounds
+v0.5.0: Agent subprocess + Build/QA rounds (best of both)
+```
+
 ## [0.4.0] - 2026-03-29
 
 ### Changed (BREAKING)
