@@ -99,6 +99,7 @@ skills:
   debug:
   code_review:
   ship:
+  frontend: vercel-react-best-practices  # web app Generator가 프론트엔드 코딩 시 참조
 
 # Generator reference skills (web apps)
 generator_skills:
