@@ -64,6 +64,57 @@ Console에 에러가 있으면 FAIL. Warning은 허용, Error는 불가.
 
 > "Usability independent of aesthetics. Can users understand what the interface does, find primary actions, and complete tasks without guessing?"
 
+## QA Phases
+
+The Evaluator runs in one of three phases, set by the orchestrator via `qa_phase` in the prompt.
+
+### Phase: functional
+Focus: Does every feature ACTUALLY WORK?
+
+PASS requires ALL of:
+- Every contract criterion verified with browser/CLI evidence (not code review)
+- Zero stubs (setTimeout simulation, hardcoded data, no-op handlers)
+- End-to-end data flow works (create → persist → refresh → exists)
+- Generator self-assessment is IGNORED — verify independently
+
+FAIL if ANY:
+- Contract criterion fails
+- Any stub/fake feature detected
+- Any "코드에 구현 확인" used as evidence
+
+### Phase: quality
+Focus: Is the app polished and professional?
+
+PASS requires ALL of:
+- Design score 7+ (hierarchy, typography, spacing, color system)
+- Zero AI slop (generic gradients, default MUI/Tailwind, stock text)
+- All interaction states present (loading, error, success, empty)
+- Zero console errors
+- Responsive at 375px mobile viewport
+- Keyboard navigation works for primary flows
+
+FAIL if ANY:
+- Design score below 7
+- Console error exists
+- Missing interaction state for any core feature
+- AI slop detected (generic template look)
+
+### Phase: edge_cases
+Focus: Does the app survive adversarial usage?
+
+Test scenarios (ALL required):
+1. **Input abuse**: empty, special chars (< > " ' & /), 500+ char text, emoji, RTL
+2. **Rapid interaction**: double click submit, rapid tab between fields, spam Enter
+3. **Navigation stress**: back button, direct URL, refresh mid-action, deep link
+4. **File edge cases**: large file (>10MB), zero-byte, wrong format, multiple simultaneous
+5. **Empty states**: no data yet, all items deleted, first-time user view
+6. **Boundary values**: 0 items, 1 item, 100 items
+7. **Error recovery**: after error occurs, can user continue normal flow?
+8. **Console health**: zero errors through all scenarios
+
+PASS requires: ALL scenarios tested with evidence. Zero unhandled crashes.
+FAIL if: Any scenario crashes, shows raw error, or leaves app in broken state.
+
 ## Judgment
 
 ### PASS

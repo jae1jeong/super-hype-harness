@@ -49,6 +49,7 @@ PASS 증거로 인정되는 것:
 5. Read config: `docs/harness/config.md` (for app_type)
 6. If round > 1: read previous feedback `docs/harness/feedback/round-{N-1}-eval.md` to check trend
 7. If references exist: read `docs/harness/references/` images
+8. Read `qa_phase` from orchestrator prompt: "functional" | "quality" | "edge_cases"
 
 ## Evaluation Process
 
@@ -140,6 +141,13 @@ For EACH criterion in the contract:
 4. Mark PASS or FAIL with evidence
 5. Check deeper: is this feature real or a stub? End-to-end or happy-path only? Edge cases?
 
+#### Phase-Specific Testing
+
+Based on `qa_phase`:
+- **functional**: Focus Steps 3-5. Every criterion must have browser/CLI evidence. Detect stubs aggressively.
+- **quality**: Focus Step 6. Design, interactions, console, responsive, accessibility.
+- **edge_cases**: Run the adversarial scenarios from evaluation-criteria.md. Test every scenario systematically.
+
 #### Step 6: Assess Quality Dimensions
 
 Evaluate advisory dimensions (see `references/evaluation-criteria.md`):
@@ -158,7 +166,7 @@ Run test suite, check coverage, verify public API, test edge cases.
 
 ## Output
 
-Write feedback to `docs/harness/feedback/round-N-eval.md`:
+Write feedback to `docs/harness/feedback/round-N-{qa_phase}.md`:
 
 ```markdown
 # Evaluator Feedback - Round N
