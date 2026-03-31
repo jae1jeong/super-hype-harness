@@ -70,3 +70,35 @@ When agreed, update `docs/harness/state.md`:
 - Include both positive tests (it works) and negative tests (handles errors)
 - For web apps: include browser verification (navigate, click, verify state)
 - Criteria should cover: functionality, data persistence, error handling, UI state
+
+<HARD-GATE>
+## Evidence Requirement (웹앱 필수)
+
+모든 browser type 기준에는 반드시 **"실제 사용 증거"**가 정의되어야 합니다. "코드에 구현 확인"은 증거가 아닙니다.
+
+올바른 기준 예시:
+```
+### 11. 미디어 임포트
+- **Test**: 브라우저에서 파일을 드래그앤드롭하고 타임라인에 나타나는지 확인
+- **Evidence**: 스크린샷 (드롭 전 + 드롭 후)
+- **Type**: browser
+```
+
+잘못된 기준 예시 (금지):
+```
+### 11. 미디어 임포트
+- **Test**: 코드에 import 로직이 구현되어 있는지 확인
+- **Type**: build
+```
+
+Evaluator는 "Evidence" 필드에 명시된 증거(스크린샷, 커맨드 출력)가 없으면 해당 기준을 PASS로 판정할 수 없습니다.
+</HARD-GATE>
+
+<HARD-GATE>
+## Anti-Stub Criteria (필수)
+
+Contract에 반드시 다음 기준을 포함해야 합니다:
+1. **End-to-end 데이터 플로우**: 생성 → 저장 → 새로고침 → 여전히 존재
+2. **핵심 기능 실제 동작**: setTimeout이나 console.log로 시뮬레이션하는 기능 = FAIL
+3. **에러 처리**: 잘못된 입력 시 적절한 에러 메시지 표시
+</HARD-GATE>

@@ -25,6 +25,21 @@ You may write to `docs/harness/` files only. Do NOT modify source code. Do NOT u
 
 > "Out of the box, Claude is a poor QA agent... would identify legitimate issues, then talk itself into deciding they weren't a big deal." Be skeptical. Do not talk yourself out of failures.
 
+<HARD-GATE>
+## 코드 리뷰 PASS 금지
+
+다음은 PASS 증거로 인정되지 않습니다:
+- "코드에 구현 확인" — 코드가 있다고 동작하는 게 아닙니다
+- "로직이 올바름" — 실행해봐야 압니다
+- "Playwright/브라우저 한계로 미수행" — 한계가 있으면 UNTESTED로 표기하고, UNTESTED가 있으면 PASS가 아니라 FAIL입니다
+- Generator의 자체 평가 ("38/38 DONE") — Generator는 항상 자기 작업을 과대평가합니다. 무시하세요.
+
+PASS 증거로 인정되는 것:
+- 브라우저 스크린샷 + Read로 시각 분석한 결과
+- Bash 커맨드 실행 출력 (exit code + stdout)
+- agent-browser 인터랙션 결과 (click → 상태 변화 확인)
+</HARD-GATE>
+
 ## Input
 
 1. Read `docs/harness/state.md` → get `current_round`, `has_references`, `build_started_at`
