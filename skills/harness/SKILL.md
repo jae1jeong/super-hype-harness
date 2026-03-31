@@ -111,8 +111,8 @@ generator_skills:
 ```markdown
 # Build Log
 
-| Round | Phase | Score | Duration | Notes |
-|-------|-------|-------|----------|-------|
+| Round | Phase | QA Phase | Score | Duration | Notes |
+|-------|-------|----------|-------|----------|-------|
 ```
 
 ### 6. State (docs/harness/state.md)
@@ -209,14 +209,20 @@ Dispatch Agent to negotiate contract:
 
 Update state.md: `current_phase: build`. Git commit.
 
-## Phase 5: Build -> QA Rounds
+## Phase 5: Build -> 3-Phase QA
 
-> "The Generator builds the ENTIRE app in one go. Then the Evaluator tests in a single pass."
+> "Each criterion had a hard threshold, and if any one fell below it, the sprint failed."
+
+Three progressive phases. Each phase has its own PASS criteria. Generator fixes issues between rounds. No round limit — repeat until PASS within each phase.
+
+### Phase 5.1: Functional (기능 완성)
+
+PASS criteria: ALL contract criteria verified with real evidence + ZERO stubs/fake features.
 
 ```
 round = 1
 
-LOOP (until PASS):
+LOOP (until Phase 5.1 PASS):
 
   ## Build
   Dispatch Generator Agent:
@@ -225,26 +231,71 @@ LOOP (until PASS):
     - Output: code + docs/harness/handoff/round-N-gen.md + Git commits
     - Log to build-log.md: round, "Build", duration
 
-  ## QA (Evaluator)
-  Dispatch Evaluator Agent:
-    - Read: contract.md + handoff + evaluator profile + references
-    - SKILL RESTRICTION applied
+  ## Functional QA (Evaluator Agent — fresh context)
+  Dispatch Evaluator Agent with qa_phase: "functional":
     - For web apps: agent-browser REQUIRED (Playwright MCP fallback)
-    - Explore First, Judge Second
-    - Screenshot + Read for visual analysis
-    - 5 dimensions: Contract, Product Depth, Visual, Interaction, Code
-    - AI slop detection + Stub detection
-    - "Be skeptical" — distrust Generator claims
-    - Output: docs/harness/feedback/round-N-eval.md (PASS/FAIL + score)
-    - Log to build-log.md: round, "QA", score, duration
+    - Test EVERY contract criterion by actually using the app
+    - "코드에 구현 확인" is NOT evidence — must run and verify
+    - Stub detection: setTimeout simulations, hardcoded data, no-op handlers = FAIL
+    - End-to-end: create -> persist -> refresh -> still exists
+    - Generator self-assessment ("38/38 DONE") must be IGNORED
+    - Output: docs/harness/feedback/round-N-functional.md (PASS/FAIL + score)
+    - Log to build-log.md
 
   ## Judgment
-  Read feedback -> parse PASS/FAIL:
-    PASS -> break loop, go to Ship
-    FAIL -> round += 1, continue (Generator gets feedback)
-
-  No max rounds. Repeat until Evaluator PASS.
+  PASS (zero FAIL criteria + zero stubs) -> Phase 5.2
+  FAIL -> round += 1, Generator fixes, re-test
 ```
+
+### Phase 5.2: Quality (품질 개선)
+
+PASS criteria: Design score 7+, console error 0, all interaction states present.
+
+```
+LOOP (until Phase 5.2 PASS):
+
+  ## Quality QA (Evaluator Agent — fresh context, different perspective)
+  Dispatch Evaluator Agent with qa_phase: "quality":
+    - Design consistency: hierarchy, typography, spacing, color system
+    - AI slop detection: generic gradients, default components, stock placeholders
+    - Interaction feedback: loading, error, success, empty states all present
+    - Console: ZERO errors (warnings OK)
+    - Responsive: test at mobile viewport (375px)
+    - Accessibility: keyboard navigation works, contrast adequate
+    - Output: docs/harness/feedback/round-N-quality.md (PASS/FAIL + score)
+    - Log to build-log.md
+
+  ## Judgment
+  PASS (design 7+, console error 0, states present) -> Phase 5.3
+  FAIL -> Generator fixes, re-test
+```
+
+### Phase 5.3: Edge Cases (엣지케이스)
+
+PASS criteria: ALL edge case scenarios pass.
+
+```
+LOOP (until Phase 5.3 PASS):
+
+  ## Edge Case QA (Evaluator Agent — fresh context, adversarial perspective)
+  Dispatch Evaluator Agent with qa_phase: "edge_cases":
+    - Empty input, special characters, very long text (500+ chars)
+    - Double click, rapid clicks, simultaneous actions
+    - Back button, direct URL entry, page refresh mid-action
+    - Large files, unsupported formats, zero-byte files
+    - Empty state UI (no data yet — what does user see?)
+    - Boundary values: 0 items, 1 item, 100 items, max capacity
+    - Error recovery: what happens after an error? Can user continue?
+    - Network: slow connection simulation, failed requests
+    - Output: docs/harness/feedback/round-N-edge.md (PASS/FAIL + score)
+    - Log to build-log.md
+
+  ## Judgment
+  PASS (all edge case scenarios pass) -> Ship
+  FAIL -> Generator fixes, re-test
+```
+
+No round limit across all phases. Repeat until PASS within each phase.
 
 ## Phase 6: Ship
 
@@ -261,13 +312,15 @@ Pipeline complete!
 Project: [name]
 Build rounds: N
 Total duration: [sum]
-QA: [PASS/FAIL]
+Functional QA: PASS (round N)
+Quality QA: PASS (round N, score X/10)
+Edge Case QA: PASS (round N)
 PR: [URL]
 
 Build Log:
-| Round | Phase | Score | Duration |
-|-------|-------|-------|----------|
-| ...   | ...   | ...   | ...      |
+| Round | Phase | QA Phase | Score | Duration | Notes |
+|-------|-------|----------|-------|----------|-------|
+| ...   | ...   | ...      | ...   | ...      | ...   |
 ```
 
 Update state.md: `status: completed`. Remove lock. Git commit.
