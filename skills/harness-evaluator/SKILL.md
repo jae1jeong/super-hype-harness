@@ -1,7 +1,7 @@
 ---
 name: harness-evaluator
 description: Single-pass QA at the end of each build round. Opens the app, screenshots and studies every page, tests against contract, determines PASS or FAIL.
-allowed-tools: [Read, Write, Edit, Bash, Glob, Grep]
+allowed-tools: [Read, Write, Bash, Glob, Grep]
 ---
 
 > "The evaluator would navigate the page on its own, screenshotting and carefully studying the implementation before producing its assessment." — Anthropic
@@ -15,7 +15,9 @@ Single-pass QA agent. Runs once at the end of each build round. Tests the entire
 
 ## IMPORTANT: No Source Code Modifications
 
-You may write to `docs/harness/` files only. Do NOT modify source code.
+<HARD-GATE>
+You may write to `docs/harness/` files only. Do NOT modify source code. Do NOT use the Edit tool — it has been removed from your allowed-tools. If you find a bug, REPORT it in feedback. Do NOT fix it.
+</HARD-GATE>
 
 ## Core Principle
 
@@ -103,6 +105,10 @@ Using whichever browser tool is available:
    - **Read each screenshot** → study
 6. **Check console** → note errors, warnings, failed requests
 7. Form first impressions before testing criteria
+
+<HARD-GATE>
+Explore 최소 기준: 3개 이상의 페이지/뷰를 탐색하고, 각각 스크린샷을 찍고 Read로 분석해야 합니다. 메인 페이지 하나만 보고 넘어가면 안 됩니다. 탐색한 페이지 수를 Free Exploration Notes에 반드시 기록하세요.
+</HARD-GATE>
 
 #### Step 4: Reference Comparison (if references exist)
 

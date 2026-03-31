@@ -28,41 +28,62 @@ For every screenshot:
 
 ### 1. Contract Compliance (Hard gate — PASS/FAIL)
 
-Each criterion has a **hard threshold**. If ANY ONE fails, the round fails.
+Each criterion has a **hard threshold**. If ANY ONE fails, the round FAILS.
 
-### 2. Product Depth (Advisory)
-- Stubs vs real features (hardcoded data, no-op handlers)
+### 2. Product Depth (Hard gate — PASS/FAIL)
+
+<HARD-GATE>
+Stub이 1개라도 있으면 FAIL. 하드코딩된 데이터, no-op 핸들러, 가짜 기능은 PASS가 될 수 없다.
+</HARD-GATE>
+
+- Stubs vs real features (hardcoded data, no-op handlers, "coming soon" placeholders)
 - End-to-end completeness (create → persist → retrieve → display)
 - Edge cases (empty state, errors, long text, rapid clicks)
+- **If ANY feature is a stub → FAIL**
 
-### 3. Design Quality (Advisory, web apps)
+### 3. Design Quality (Hard gate for web apps — score 5 이하면 FAIL)
 
-> "Does the design feel like a coherent whole rather than a collection of parts? Do colors, typography, layout, imagery, and other details combine to create a distinct mood and identity?"
+> "Does the design feel like a coherent whole rather than a collection of parts?"
+
+- Score 5 이하면 FAIL — 최소한의 디자인 일관성 필요
+- AI slop (제네릭 그라디언트, 기본 컴포넌트 그대로, 스톡 플레이스홀더) 발견 시 감점
 
 ### 4. Originality (Advisory, web apps)
 
-> "Is there evidence of custom decisions, or is this template layouts, library defaults, and AI-generated patterns? Unmodified stock components—or telltale signs of AI generation like purple gradients over white cards—fail here."
+> "Is there evidence of custom decisions, or is this template layouts, library defaults, and AI-generated patterns?"
 
 ### 5. Craft (Advisory)
 
-> "Technical execution: typography hierarchy, spacing consistency, color harmony, contrast ratios. Most reasonable implementations do fine here by default; failing means broken fundamentals."
+> "Technical execution: typography hierarchy, spacing consistency, color harmony, contrast ratios."
 
-### 6. Functionality (Advisory)
+### 6. Functionality (Hard gate — console error 있으면 FAIL)
+
+<HARD-GATE>
+Console에 에러가 있으면 FAIL. Warning은 허용, Error는 불가.
+</HARD-GATE>
 
 > "Usability independent of aesthetics. Can users understand what the interface does, find primary actions, and complete tasks without guessing?"
 
 ## Judgment
 
 ### PASS
-ALL contract criteria verified with evidence.
+ALL of these must be true:
+1. ALL contract criteria verified with evidence
+2. ZERO stubs or fake features (Product Depth)
+3. Design score > 5 (web apps)
+4. ZERO console errors (Functionality)
 
 ### FAIL
-ANY contract criterion fails. Detailed feedback with:
+ANY of the above fails. Detailed feedback with:
 - What was tried
 - What was expected
 - What actually happened
 - Steps to reproduce
 - Concrete fix direction
+
+<HARD-GATE>
+9/10 점수를 주려면: 모든 기능이 end-to-end 동작, stub 없음, console error 없음, 디자인에 고유한 아이덴티티가 있어야 한다. 의심이 들면 점수를 낮춰라. "괜찮아 보이는데"는 9점이 아니라 7점이다.
+</HARD-GATE>
 
 ## Scoring Guide (Advisory, 1-10)
 
