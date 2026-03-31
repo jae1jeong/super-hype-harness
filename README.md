@@ -63,32 +63,37 @@ claude plugins install super-hype-harness@super-hype-harness
  Contract Negotiation (Generator proposes, Evaluator reviews, iterate until agreed)
     |
     v
- Build → QA Rounds:
+ 3-Phase Progressive QA:
     |
-    |  Round 1:
-    |    Generator → builds entire app → handoff
-    |    Evaluator → screenshots, studies, tests → feedback (FAIL, 6/10)
+    |  Phase 1 — Functional (does it WORK?):
+    |    Generator builds → Evaluator tests every feature
+    |    Stubs? FAIL. Code review only? FAIL. Must use the app.
+    |    Repeat until zero stubs, all features real.
     |
-    |  Round 2:
-    |    Generator → fixes based on feedback → handoff
-    |    Evaluator → re-tests → feedback (FAIL, 8/10)
+    |  Phase 2 — Quality (is it GOOD?):
+    |    Fresh Evaluator → design, console errors, responsive, accessibility
+    |    AI slop? FAIL. Console error? FAIL. Score < 7? FAIL.
+    |    Repeat until polished.
     |
-    |  Round 3:
-    |    Generator → fixes remaining → handoff
-    |    Evaluator → re-tests → feedback (PASS, 9/10)
+    |  Phase 3 — Edge Cases (can it SURVIVE?):
+    |    Fresh Evaluator → empty input, double click, back button,
+    |    large files, boundary values, error recovery
+    |    Any crash or raw error? FAIL. Repeat until bulletproof.
     |
     v
  Ship (tests + PR)
 ```
 
 **Key design principles:**
-- **One continuous session** with automatic compaction
+- **Agent subprocess per phase** — each phase gets fresh context (context reset)
 - **File-based handoff** — "one agent writes a file, another reads it"
-- **No sprints** — Generator builds everything, Evaluator tests in a single pass
-- **Build → QA rounds** — fail, fix, re-test until pass (typically 2-3 rounds)
+- **No sprints** — Generator builds everything, then 3-phase progressive QA
+- **3-phase QA** — Functional (does it work?) → Quality (is it good?) → Edge Cases (can it survive?)
+- **No round limits** — repeat until PASS within each phase
 - **Contract negotiation** — "the two iterated until they agreed" before any code
 - **Screenshot and study** — Evaluator reads screenshots for visual analysis
-- **Hard thresholds** — "if any one criterion fell below it, the sprint failed"
+- **Hard thresholds** — stubs = FAIL, console error = FAIL, code review = not evidence
+- **Skill whitelist** — config.skills controls which skills sub-agents can use
 - **Reference matching** — `--ref` with URL or image
 
 ## Pipeline Output

@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-03-31
+
+### Added
+- **3단계 심화 QA** — 단일 QA 루프를 3-phase progressive QA로 교체
+  - Phase 1 (Functional): Contract 기준 실제 동작 확인 + stub/가짜 기능 제로
+  - Phase 2 (Quality): 디자인 7+, console error 0, 반응형, 인터랙션 상태, 접근성
+  - Phase 3 (Edge Cases): 입력 남용, 연타, 뒤로가기, 대용량 파일, 경계값, 빈 상태, 에러 복구
+- 각 Phase별 독립 Evaluator Agent (fresh context, 이전 Phase의 관대한 판정에 오염 안 됨)
+- Build-log에 QA Phase 컬럼 추가
+- evaluation-criteria.md에 qa_phase별 PASS/FAIL 기준 명세
+
+### Changed
+- Evaluator가 코드 리뷰로 PASS 주는 것 금지 (HARD-GATE 강화)
+- Product Depth를 Advisory → Hard gate (stub 1개 = FAIL)
+- Console error = FAIL (Hard gate)
+- Evaluator에서 Edit 도구 제거
+- Contract에 Evidence Requirement + Anti-Stub Criteria 강제
+- agent-browser 우선 사용 HARD-GATE (Playwright MCP는 최후 fallback)
+- 라운드 상한 제거 — PASS될 때까지 무제한 반복
+
+### Fixed
+- Evaluator가 Generator "38/38 DONE" 자체 평가를 그대로 믿는 문제
+- "Playwright 한계로 미수행"을 PASS로 인정하는 문제 → UNTESTED = FAIL
+
 ## [0.5.1] - 2026-03-31
 
 ### Fixed
