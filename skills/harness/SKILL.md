@@ -85,7 +85,6 @@ auto_resume: true
 generator: default
 evaluator: default
 browser_evaluator: browser-qa
-max_rounds: 5
 app_type: web
 has_references: false
 
@@ -215,7 +214,9 @@ Update state.md: `current_phase: build`. Git commit.
 > "The Generator builds the ENTIRE app in one go. Then the Evaluator tests in a single pass."
 
 ```
-for round in 1..max_rounds:
+round = 1
+
+LOOP (until PASS):
 
   ## Build
   Dispatch Generator Agent:
@@ -240,10 +241,9 @@ for round in 1..max_rounds:
   ## Judgment
   Read feedback -> parse PASS/FAIL:
     PASS -> break loop, go to Ship
-    FAIL -> continue to next round (Generator gets feedback)
+    FAIL -> round += 1, continue (Generator gets feedback)
 
-  if round == max_rounds and still FAIL:
-    Log "max rounds reached" and proceed to Ship anyway
+  No max rounds. Repeat until Evaluator PASS.
 ```
 
 ## Phase 6: Ship
