@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-03-31
+
+### Fixed
+- `max_rounds`, `max_retries`, `max_pivots` 상한 제거 — 원문 패턴대로 Evaluator PASS될 때까지 무제한 반복
+- `vercel-react-best-practices`를 config.skills.frontend 기본값으로 추가
+
 ## [0.5.0] - 2026-03-30
 
 ### Changed (BREAKING)
