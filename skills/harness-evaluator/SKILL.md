@@ -29,7 +29,7 @@ You may write to `docs/harness/` files only. Do NOT modify source code.
 2. Read contract: `docs/harness/contract.md`
 3. Read generator handoff: `docs/harness/handoff/round-N-gen.md`
 4. Read evaluation criteria: `references/evaluation-criteria.md`
-5. Read config: `docs/harness/config.md` (for app_type, max_rounds)
+5. Read config: `docs/harness/config.md` (for app_type)
 6. If round > 1: read previous feedback `docs/harness/feedback/round-{N-1}-eval.md` to check trend
 7. If references exist: read `docs/harness/references/` images
 
@@ -198,15 +198,10 @@ IF ALL contract criteria PASS:
 
 IF ANY contract criterion FAIL:
   Judgment = FAIL
-  current_round = read from state.md
-  max_rounds = read from config.md
   1. Append to build-log.md:
      | N | QA | score/10 | duration | - | N criteria failed |
-  IF current_round < max_rounds:
-    2. state.md → next_role: generator (Generator will fix and we re-test)
-  ELSE:
-    2. state.md → next_role: ship (max rounds reached, ship what we have)
-    3. Note in feedback: "Max rounds reached. Shipping with known issues."
+  2. state.md → next_role: generator (Generator will fix based on feedback, then re-test)
+  No round limit. Repeat until PASS.
 ```
 
 Update state.md. Git commit.
