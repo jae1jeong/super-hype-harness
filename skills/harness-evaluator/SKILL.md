@@ -43,45 +43,44 @@ You may write to `docs/harness/` files only. Do NOT modify source code.
 웹앱은 반드시 브라우저에서 실제로 테스트해야 합니다. 코드리뷰만으로는 PASS 불가.
 </HARD-GATE>
 
-**agent-browser 우선, 없으면 Playwright MCP fallback:**
+<HARD-GATE>
+agent-browser를 반드시 먼저 사용하세요. Playwright MCP (mcp__playwright__*) 도구가 있더라도 agent-browser가 설치되어 있으면 agent-browser를 사용해야 합니다. Playwright MCP는 agent-browser가 설치 불가능할 때만 사용하는 최후의 fallback입니다.
+</HARD-GATE>
+
+**Step 1a: agent-browser 확인 (Bash로 실행)**
 
 ```bash
-# 1차: agent-browser 확인
-if which agent-browser > /dev/null 2>&1; then
-  BROWSER_TOOL="agent-browser"
-else
-  # 2차: agent-browser 설치 시도
-  npm install -g agent-browser 2>/dev/null && agent-browser install 2>/dev/null
-  if which agent-browser > /dev/null 2>&1; then
-    BROWSER_TOOL="agent-browser"
-  else
-    # 3차: Playwright MCP fallback
-    BROWSER_TOOL="playwright"
-  fi
-fi
+which agent-browser && echo "AGENT_BROWSER_AVAILABLE" || echo "NOT_FOUND"
 ```
 
-If using **agent-browser**:
+**agent-browser가 있으면 (AGENT_BROWSER_AVAILABLE):**
+
+반드시 Bash를 통해 agent-browser CLI로 테스트합니다. mcp__playwright__* 도구를 사용하지 마세요.
+
 ```bash
 agent-browser open <url>
-agent-browser snapshot          # Page structure + element refs
+agent-browser snapshot          # Page structure + element refs (@e1, @e2...)
 agent-browser click "@e1"       # Click by ref
 agent-browser fill "@e3" "text" # Fill input
 agent-browser screenshot        # Capture evidence
 agent-browser console           # JS errors
 ```
 
-If using **Playwright MCP** (fallback):
-```
-mcp__playwright__browser_navigate → open URL
-mcp__playwright__browser_snapshot → page structure + element refs
-mcp__playwright__browser_click → click element
-mcp__playwright__browser_fill_form → fill input
-mcp__playwright__browser_take_screenshot → capture evidence
-mcp__playwright__browser_console_messages → JS errors
+**agent-browser가 없으면 (NOT_FOUND) — 설치 시도:**
+
+```bash
+npm install -g agent-browser && agent-browser install
 ```
 
-Both tools produce the same result: real browser interaction + screenshots + console errors.
+설치 성공 시 위의 agent-browser 명령어 사용. 설치 실패 시에만 Playwright MCP fallback:
+
+```
+mcp__playwright__browser_navigate(url)
+mcp__playwright__browser_snapshot()
+mcp__playwright__browser_click(element)
+mcp__playwright__browser_take_screenshot()
+mcp__playwright__browser_console_messages()
+```
 
 #### Step 2: Start the app
 
