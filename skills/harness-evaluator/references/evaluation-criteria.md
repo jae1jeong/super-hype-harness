@@ -99,21 +99,27 @@ FAIL if ANY:
 - Missing interaction state for any core feature
 - AI slop detected (generic template look)
 
-### Phase: edge_cases
-Focus: Does the app survive adversarial usage?
+### Phase: edge_cases (Comprehensive Testing)
+Focus: Parallel team testing — components, E2E, edge cases, DevTools, test generation.
 
-Test scenarios (ALL required):
-1. **Input abuse**: empty, special chars (< > " ' & /), 500+ char text, emoji, RTL
-2. **Rapid interaction**: double click submit, rapid tab between fields, spam Enter
-3. **Navigation stress**: back button, direct URL, refresh mid-action, deep link
-4. **File edge cases**: large file (>10MB), zero-byte, wrong format, multiple simultaneous
-5. **Empty states**: no data yet, all items deleted, first-time user view
-6. **Boundary values**: 0 items, 1 item, 100 items
-7. **Error recovery**: after error occurs, can user continue normal flow?
-8. **Console health**: zero errors through all scenarios
+**Web apps use Agent Team (6 teammates). CLI/library uses single agent.**
 
-PASS requires: ALL scenarios tested with evidence. Zero unhandled crashes.
-FAIL if: Any scenario crashes, shows raw error, or leaves app in broken state.
+#### Teammate roles and PASS criteria:
+
+**1. Component Tester**: Every UI component renders, interacts, state changes correctly.
+**2. E2E Flow Tester**: Every user journey works end-to-end with data persistence.
+**3. Edge Case Tester**: All adversarial scenarios pass:
+  - Input abuse: empty, special chars, 500+ chars, emoji, RTL
+  - Rapid interaction: double click, spam Enter, simultaneous actions
+  - Navigation: back button, direct URL, refresh mid-action
+  - Files: large (>10MB), zero-byte, wrong format
+  - Empty states, boundary values (0/1/100), error recovery
+**4. DevTools Inspector** (web apps): Lighthouse audit, console errors, network failures, memory, accessibility.
+**5. Test Case Generator**: 50+ test cases documented in test-cases.md (unit/integration/e2e/edge).
+**6. Adversarial Reviewer**: Reads all 5 outputs, challenges PASS judgments, finds untested gaps.
+
+PASS requires: ALL 6 teammates PASS. Adversarial reviewer finds no additional issues.
+FAIL if: Any teammate FAIL, or Adversarial finds untested scenarios.
 
 ## Judgment
 

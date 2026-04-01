@@ -270,29 +270,82 @@ LOOP (until Phase 5.2 PASS):
   FAIL -> Generator fixes, re-test
 ```
 
-### Phase 5.3: Edge Cases (엣지케이스)
+### Phase 5.3: Comprehensive Testing (포괄적 테스트)
 
-PASS criteria: ALL edge case scenarios pass.
+PASS criteria: ALL teammates PASS. Adversarial reviewer finds no additional issues.
+
+> Inspired by OpenObserve's "Council of Sub Agents" — 8 specialized agents, 380 → 700+ tests.
+
+**For web apps, use Agent Team (parallel). For CLI/library, use single Agent (sequential).**
 
 ```
-LOOP (until Phase 5.3 PASS):
+## Web App: Agent Team (5 parallel testers + 1 reviewer)
 
-  ## Edge Case QA (Evaluator Agent — fresh context, adversarial perspective)
+Dispatch Agent Team with 6 teammates:
+
+  Teammate 1: Component Tester
+    - List all UI components/pages from source code
+    - For EACH component: render, interact, verify state changes
+    - Test props/events/conditional rendering
+    - Use agent-browser: open page → snapshot → click each interactive element → verify
+    - Output: docs/harness/feedback/round-N-components.md
+
+  Teammate 2: E2E Flow Tester
+    - Test every user journey from spec (signup → core feature → completion)
+    - Use agent-browser for full flow: navigate → fill → submit → verify result
+    - Test data persistence: create → navigate away → come back → still exists?
+    - Output: docs/harness/feedback/round-N-e2e.md
+
+  Teammate 3: Edge Case Tester
+    - Input abuse: empty, special chars (< > " ' & /), 500+ chars, emoji, RTL
+    - Rapid interaction: double click, spam Enter, simultaneous actions
+    - Navigation: back button, direct URL, refresh mid-action, deep link
+    - Files: large (>10MB), zero-byte, wrong format
+    - Boundary: 0 items, 1 item, 100 items
+    - Empty states: no data, all deleted, first-time user
+    - Error recovery: after error, can user continue?
+    - Output: docs/harness/feedback/round-N-edge.md
+
+  Teammate 4: DevTools Inspector (web apps — uses Chrome DevTools MCP)
+    - Console: capture ALL errors, warnings, failed requests
+    - Network: check for failed API calls, slow requests (>3s), CORS errors
+    - Performance: run Lighthouse audit, check Core Web Vitals
+    - Memory: take memory snapshot, check for obvious leaks
+    - Accessibility: run accessibility audit
+    - Use tools: mcp__chrome-devtools__list_console_messages,
+      mcp__chrome-devtools__list_network_requests,
+      mcp__chrome-devtools__lighthouse_audit,
+      mcp__chrome-devtools__take_memory_snapshot,
+      mcp__chrome-devtools__performance_start_trace / stop_trace
+    - Output: docs/harness/feedback/round-N-devtools.md
+
+  Teammate 5: Test Case Generator
+    - Analyze source code structure (components, routes, API endpoints)
+    - Generate test cases file: docs/harness/test-cases.md
+    - Categories: unit, integration, e2e, edge case, performance
+    - Target: 50+ test cases minimum
+    - Format per case:
+      | # | Category | Component | Action | Expected | Priority |
+    - Output: docs/harness/feedback/round-N-testcases.md + docs/harness/test-cases.md
+
+  Teammate 6: Adversarial Reviewer
+    - Read ALL 5 teammate outputs
+    - Challenge every PASS: "did they actually test this or just claim it?"
+    - Find gaps: scenarios no one tested
+    - Cross-reference: does E2E tester's result match Component tester's?
+    - Output: docs/harness/feedback/round-N-adversarial.md
+
+## Team Lead Judgment
+  Read all 6 outputs:
+    ALL teammates PASS + Adversarial finds nothing new → Phase 5.3 PASS → Ship
+    ANY teammate FAIL or Adversarial finds issues → Generator fixes → re-run failed teammates
+
+## CLI/Library: Single Agent (sequential)
   Dispatch Evaluator Agent with qa_phase: "edge_cases":
-    - Empty input, special characters, very long text (500+ chars)
-    - Double click, rapid clicks, simultaneous actions
-    - Back button, direct URL entry, page refresh mid-action
-    - Large files, unsupported formats, zero-byte files
-    - Empty state UI (no data yet — what does user see?)
-    - Boundary values: 0 items, 1 item, 100 items, max capacity
-    - Error recovery: what happens after an error? Can user continue?
-    - Network: slow connection simulation, failed requests
-    - Output: docs/harness/feedback/round-N-edge.md (PASS/FAIL + score)
-    - Log to build-log.md
-
-  ## Judgment
-  PASS (all edge case scenarios pass) -> Ship
-  FAIL -> Generator fixes, re-test
+    - Run test suite with edge case inputs
+    - Boundary values, error handling, invalid types
+    - Generate test-cases.md
+    - Output: docs/harness/feedback/round-N-edge.md
 ```
 
 No round limit across all phases. Repeat until PASS within each phase.
