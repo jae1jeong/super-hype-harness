@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-04-01
+
+### Added
+- **harness-retro 스킬** — 하네스로 만든 프로젝트의 회고 스킬
+  - 실행 검증: 빌드, 실행, 핵심 기능 스팟체크
+  - Anthropic 원문 8가지 핵심 원칙 대비 파이프라인 충실도 분석
+  - README 상태 검증 및 교체 초안 자동 생성
+  - Keep / Improve / Try 회고 보고서 출력
+
 ## [0.4.0] - 2026-03-29
 
 ### Changed (BREAKING)
