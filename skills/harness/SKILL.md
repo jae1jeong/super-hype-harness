@@ -162,12 +162,30 @@ Do NOT proceed to Phase 3 until all reviews pass.
 
 ### 2a. CEO Review
 
+<HARD-GATE>
+CEO Review의 목적은 범위를 줄이는 것이 아니라, 야심찬 제품을 만들기 위해 범위를 적절히 확장하는 것이다.
+"작게 만들자"는 기본 성향을 경계하라. Anthropic 글에서 Planner는 1-4문장을 16개 기능으로 확장했다.
+</HARD-GATE>
+
 Dispatch Agent subprocess:
 - If `config.skills.ceo_review` set: Agent prompt includes `Skill("config.skills.ceo_review")` instruction + SKILL RESTRICTION
-- If empty: Agent performs built-in checklist:
-  - MVP scoped right? Features over/under-scoped? Tech stack realistic? Missing features? Ambition level?
+- If empty: Agent performs built-in review:
 
-Parse result: scope issues -> return to Phase 1. Approved -> continue.
+**범위 확장 체크 (축소가 아님):**
+- 사용자가 말한 것보다 더 큰 제품이 숨어있지 않은가? ("일일 브리핑 앱"이 아니라 "개인 비서 AI"일 수 있다)
+- 핵심 기능 외에 사용자가 "당연히 있을 거라 기대하는" 기능이 빠져있지 않은가?
+- AI 통합 포인트가 충분한가? (Claude/LLM을 더 활용할 수 있는 곳은?)
+- 경쟁 제품 대비 차별화 포인트가 명확한가?
+
+**현실성 체크:**
+- 기술 스택이 목표에 맞는가?
+- MVP로 충분히 "와" 할 수 있는 수준인가? (너무 보수적이면 FAIL)
+- 너무 야심차서 완성 불가능한 수준은 아닌가?
+
+**판정:**
+- "범위가 너무 작다 / 야심이 부족하다" → spec 확장 요청 후 Phase 1로
+- "범위가 적절하고 야심차다" → continue
+- "범위가 너무 커서 현실적이지 않다" → spec 축소 요청 후 Phase 1로
 
 ### 2b. Design Review (web only)
 
@@ -319,20 +337,27 @@ Dispatch Agent Team with 6 teammates:
       mcp__chrome-devtools__performance_start_trace / stop_trace
     - Output: docs/harness/feedback/round-N-devtools.md
 
-  Teammate 5: Test Case Generator
-    - Analyze source code structure (components, routes, API endpoints)
-    - Generate test cases file: docs/harness/test-cases.md
+  Teammate 5: Test Case Generator (먼저 실행, 결과를 1-4에게 전달)
+    - Analyze source code: components, routes, API endpoints, state management
+    - Generate 100+ test cases: docs/harness/test-cases.md
     - Categories: unit, integration, e2e, edge case, performance
-    - Target: 50+ test cases minimum
     - Format per case:
       | # | Category | Component | Action | Expected | Priority |
+    - SendMessage to Teammate 1-4: "이 케이스들을 실행해주세요"
+      - Component cases → Teammate 1
+      - E2E flow cases → Teammate 2
+      - Edge cases → Teammate 3
+      - DevTools/performance cases → Teammate 4
     - Output: docs/harness/feedback/round-N-testcases.md + docs/harness/test-cases.md
+    - 매 라운드마다 코드를 다시 분석해서 케이스 업데이트
 
-  Teammate 6: Adversarial Reviewer
-    - Read ALL 5 teammate outputs
-    - Challenge every PASS: "did they actually test this or just claim it?"
-    - Find gaps: scenarios no one tested
-    - Cross-reference: does E2E tester's result match Component tester's?
+  Teammate 6: Adversarial Reviewer (모든 결과가 나온 후 실행)
+    - Read test-cases.md: "빠진 케이스가 있다" → 추가 케이스 생성
+    - Read ALL 5 teammate outputs:
+      - "PASS 줬는데 스크린샷 증거 없다" → FAIL 처리
+      - "이 케이스 실행 안 했다" → FAIL 처리
+      - "Teammate 2가 PASS인데 Teammate 1 결과와 모순" → 지적
+    - test-cases.md의 케이스 중 실행되지 않은 것 식별
     - Output: docs/harness/feedback/round-N-adversarial.md
 
 ## Team Lead Judgment
