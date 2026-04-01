@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-04-01
+
+### Added
+- **Pipeline Log (`pipeline-log.md`)** — 에이전트 디스패치, 스킬 사용, 오케스트레이터 판단을 타임스탬프와 함께 상세 기록
+  - Actor/Event/Skills Used/Duration/Details 컬럼
+  - 모든 페이즈에서 dispatch/complete/judgment/phase-transition 이벤트 기록
+- **Generator/Evaluator 스킬 강제 로드** — `allowed-tools`에 `Skill` 추가 + HARD-GATE로 Skill() 호출 강제
+  - generator_skills/evaluator_skills에 나열된 스킬을 반드시 Skill 도구로 로드
+  - 핸드오프의 "Skills Used" 섹션 비어있으면 오케스트레이터가 WARN + 재디스패치
+- **`web-design-guidelines` 빌트인 적용** — 웹앱 Evaluator가 디자인 QA 시 자동 로드
+  - config.md에 `evaluator_skills` 섹션 추가
+- **QA 테스트 케이스 실행 요약** — Phase 5.3 팀 완료 후 `round-N-test-summary.md` 생성
+  - 카테고리별 Generated/Executed/PASS/FAIL 테이블
+  - Adversarial 추가 케이스 + 미실행 케이스 목록
+- **에이전트 팀 per-teammate 로깅** — 각 Teammate output footer에 Tools & Skills Used + 테스트 케이스 수 기록
+- **`/harness-status --log`** — pipeline-log 최근 활동 + 스킬 사용 요약 표시
+- **`/harness-status --tests`** — 테스트 케이스 실행 현황 표시
+
+### Fixed
+- **Generator/Evaluator `allowed-tools`에 `Skill` 누락** — 서브에이전트가 스킬을 호출할 수 없었던 근본 버그 수정
+
 ## [0.7.1] - 2026-04-01
 
 ### Fixed

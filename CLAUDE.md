@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Super Hype Harness is a **Claude Code plugin** for long-running app development. Agent subprocess per phase (context reset) + Build/QA rounds + config-based skill whitelist.
 
-Version 0.5.0. Skill-only project — no build step, no test suite. All logic in SKILL.md files.
+Version 0.8.0. Skill-only project — no build step, no test suite. All logic in SKILL.md files.
 
 ## Architecture — V3 (Agent subprocess + Build/QA rounds)
 
