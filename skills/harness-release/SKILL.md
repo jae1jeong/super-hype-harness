@@ -55,13 +55,41 @@ git log $(git describe --tags --abbrev=0)..HEAD --oneline
 - `chore:` → ### Changed
 - `docs:` → ### Changed
 
+### Step 3b: 코드 diff 분석 (커밋 메시지만으로 부족할 때)
+
+커밋 메시지가 모호하거나 변경 범위를 정확히 파악해야 할 때, 실제 코드를 분석:
+
+```bash
+# 마지막 태그 이후 변경된 파일 목록
+git diff $(git describe --tags --abbrev=0)..HEAD --stat
+
+# 변경된 SKILL.md 파일들의 diff 요약
+git diff $(git describe --tags --abbrev=0)..HEAD -- skills/ evaluators/ generators/
+
+# 새로 추가된 파일
+git diff $(git describe --tags --abbrev=0)..HEAD --diff-filter=A --name-only
+
+# 삭제된 파일
+git diff $(git describe --tags --abbrev=0)..HEAD --diff-filter=D --name-only
+```
+
+변경된 파일의 실제 코드를 읽고:
+- 새로 추가된 기능/섹션 식별
+- 삭제/변경된 동작 식별
+- config 필드 추가/삭제 식별
+- HARD-GATE 추가/변경 식별
+
+이 분석 결과를 CHANGELOG 엔트리에 반영. 커밋 메시지보다 코드 diff가 더 정확함.
+
+### Step 3c: CHANGELOG 작성
+
 CHANGELOG.md 최상단에 새 버전 엔트리 삽입:
 
 ```markdown
 ## [X.Y.Z] - YYYY-MM-DD
 
 ### Added
-- 새 기능 목록
+- 새 기능 목록 (코드 diff에서 추출)
 
 ### Fixed
 - 버그 수정 목록
@@ -69,6 +97,20 @@ CHANGELOG.md 최상단에 새 버전 엔트리 삽입:
 ### Changed
 - 변경 사항 목록
 ```
+
+### Step 3d: README 동기화
+
+변경사항이 README에 영향을 주는지 확인:
+
+1. **새 스킬 추가** → Skills Reference 테이블에 추가
+2. **config 필드 변경** → Configuration 섹션 업데이트
+3. **파이프라인 흐름 변경** → How It Works 다이어그램 업데이트
+4. **새 요구사항** → Requirements 섹션 업데이트
+5. **새 CLI 옵션** → Usage 섹션 업데이트
+
+README.md와 README.ko.md 양쪽 모두 업데이트.
+
+변경이 필요하면 수정하고 커밋에 포함. 필요 없으면 스킵.
 
 ### Step 4: 버전 범프
 
