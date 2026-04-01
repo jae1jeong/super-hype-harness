@@ -42,12 +42,12 @@ PASS 증거로 인정되는 것:
 
 ## Input
 
-1. Read `docs/harness/state.md` → get `current_round`, `has_references`, `build_started_at`
+1. Read `docs/harness/state.md` → get `current_round`, `qa_phase`, `has_references`, `build_started_at`
 2. Read contract: `docs/harness/contract.md`
 3. Read generator handoff: `docs/harness/handoff/round-N-gen.md`
 4. Read evaluation criteria: `references/evaluation-criteria.md`
 5. Read config: `docs/harness/config.md` (for app_type, evaluator_skills)
-6. If round > 1: read previous feedback `docs/harness/feedback/round-{N-1}-eval.md` to check trend
+6. If round > 1: read **ALL** previous feedback `docs/harness/feedback/round-*` to build prior results map
 7. If references exist: read `docs/harness/references/` images
 8. Read `qa_phase` from orchestrator prompt: "functional" | "quality" | "edge_cases"
 9. **If app_type is web**: Read `evaluator_skills` from config.md. For each listed skill, invoke `Skill("<skill-name>")` to load its guidelines. Default: `web-design-guidelines` — 디자인 QA 시 이 가이드라인을 기준으로 평가한다.
@@ -56,6 +56,53 @@ PASS 증거로 인정되는 것:
 evaluator_skills에 스킬이 나열되어 있으면 반드시 Skill 도구로 각 스킬을 로드해야 합니다.
 피드백의 Tools & Skills Used 섹션에 실제 로드한 스킬만 기록하세요.
 </HARD-GATE>
+
+## Anti-Duplication Rules
+
+<HARD-GATE>
+이전 라운드에서 이미 검증된 기준을 반복 테스트하지 마세요. 중복은 시간 낭비입니다.
+</HARD-GATE>
+
+### Prior Results Map
+
+이전 라운드 feedback을 읽은 후, 각 contract 기준의 상태를 분류하라:
+
+```
+CONFIRMED_PASS  — 이전 라운드에서 PASS + 이번 라운드에서 관련 코드 변경 없음
+NEEDS_REGRESSION — 이전 라운드에서 PASS + 이번 라운드에서 관련 코드 변경 있음
+NEEDS_RETEST   — 이전 라운드에서 FAIL 또는 INCONCLUSIVE
+NEW            — 이전에 테스트되지 않은 기준
+```
+
+### 테스트 전략
+
+| 상태 | 액션 | 예상 시간 |
+|------|------|----------|
+| CONFIRMED_PASS | 스킵 (이전 증거 참조만 기록) | 0분 |
+| NEEDS_REGRESSION | 빠른 스팟체크 (스크린샷 1장으로 확인) | 1분 |
+| NEEDS_RETEST | 전체 테스트 (원래대로) | 3~5분 |
+| NEW | 전체 테스트 | 3~5분 |
+
+### 팀 분할 시 영역 분리 (Comprehensive QA)
+
+여러 에이전트/팀으로 분할 테스트할 경우 **반드시 contract 기준 범위를 겹치지 않게 배정**:
+
+```
+Teammate 1: C01~C12 (빌드, 보드, 드래그, 클리어, 점수, 게임오버)
+Teammate 2: C13~C24 (재시작, 애니메이션, 사운드, 저장, 공유, 통계, 타임어택)
+Teammate 3: C25~C35 (모드전환, 테마, 튜토리얼, 반응형, 접근성, 디자인) + Edge cases
+```
+
+동일 버그를 여러 팀이 중복 발견하는 것을 방지.
+
+### 테스트 케이스 생성 규칙
+
+테스트 케이스를 자동 생성할 때:
+
+1. **실행 가능성 선행 검사**: 테스트 러너(jest/vitest/pytest 등)가 설치되어 있는지 확인. 없으면 unit test 생성 스킵 → 대신 "Generator에게 테스트 러너 설치 요청" 피드백.
+2. **P0만 실행 대상**: P0(critical path) 테스트만 실제 실행. P1/P2는 "추가 검증 필요" 리포트만 작성.
+3. **Contract 기준 기반 생성**: 기존 contract 기준(C01~C35)을 세분화하는 방식으로 생성. 완전히 새로운 기준을 만들지 않음.
+4. **이전 라운드 결과 참조 필수**: PASS 확인된 기준의 세부 케이스는 생성하지 않음.
 
 ## Evaluation Process
 
