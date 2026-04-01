@@ -108,6 +108,8 @@ docs/harness/
 ├── references/      # Reference screenshots and images
 ├── screenshots/     # Evaluator screenshots per round (round-1/, round-2/...)
 ├── build-log.md     # Round history (phase, score, duration)
+├── pipeline-log.md  # Agent dispatch, skill usage, orchestrator decisions
+├── test-cases.md    # QA test cases (updated each round)
 ├── state.md         # Pipeline state + next_role
 └── config.md        # Configuration
 ```

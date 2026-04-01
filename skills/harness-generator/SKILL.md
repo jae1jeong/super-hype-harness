@@ -1,7 +1,7 @@
 ---
 name: harness-generator
 description: Builds the entire app from spec in one pass. Self-evaluates before handoff. On subsequent rounds, fixes issues from Evaluator feedback.
-allowed-tools: [Read, Write, Edit, Bash, Glob, Grep]
+allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, Skill]
 ---
 
 > "Instructing the generator to work... picking up one feature at a time from the spec." "Instructed to self-evaluate its work... before handing off to QA." — Anthropic
@@ -19,6 +19,12 @@ Builds the entire app from the spec. No sprints — implement everything in one 
 5. If references exist: read `docs/harness/references/index.md` and reference images (use Read tool — Claude can see images)
 6. If custom generator profile in config: read `generators/<name>/SKILL.md`
 7. **Read `generator_skills` from config.md** — for each listed skill, invoke `Skill("<skill-name>")` to load its guidelines. Follow these skills' patterns during implementation. Defaults for web apps: `frontend-design`, `vercel-react-best-practices`.
+
+<HARD-GATE>
+generator_skills에 스킬이 나열되어 있으면 반드시 Skill 도구로 각 스킬을 로드해야 합니다.
+"프롬프트에 적혀있으니 알고 있다"는 증거가 아닙니다 — Skill() 호출 기록이 없으면 미사용으로 간주됩니다.
+핸드오프의 Skills Used 섹션에 실제 로드한 스킬만 기록하세요. 로드하지 않은 스킬을 적으면 안 됩니다.
+</HARD-GATE>
 
 ## Process
 
@@ -76,6 +82,11 @@ Write handoff to `docs/harness/handoff/round-N-gen.md`:
 ## Reference Alignment (if applicable)
 - [which reference patterns were followed]
 - [what differs and why]
+
+## Skills Used
+- [skill name]: [how it was used — e.g., "frontend-design: 디자인 시스템 가이드라인 참조"]
+- [skill name]: [usage description]
+- Built-in only (if no external skills loaded)
 
 ## Commits
 - [SHA]: [commit message]

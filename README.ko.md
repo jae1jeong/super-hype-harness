@@ -89,6 +89,8 @@ docs/harness/
 ├── feedback/        # 라운드별 Evaluator 피드백
 ├── references/      # 레퍼런스 스크린샷/이미지
 ├── build-log.md     # 라운드 이력 (점수, 소요시간)
+├── pipeline-log.md  # 에이전트 디스패치/스킬 사용/판단 상세 로그
+├── test-cases.md    # QA 테스트 케이스 (매 라운드 갱신)
 ├── state.md         # 파이프라인 상태 + next_role
 └── config.md        # 설정
 ```

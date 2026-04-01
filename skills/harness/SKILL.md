@@ -100,11 +100,16 @@ skills:
   code_review:
   ship:
   frontend: vercel-react-best-practices  # web app Generator가 프론트엔드 코딩 시 참조
+  design_guidelines: web-design-guidelines  # web app Evaluator가 디자인 QA 시 참조 (built-in)
 
 # Generator reference skills (web apps)
 generator_skills:
   - frontend-design
   - vercel-react-best-practices
+
+# Evaluator reference skills (web apps)
+evaluator_skills:
+  - web-design-guidelines
 ```
 
 ### 5. Build Log (docs/harness/build-log.md)
@@ -115,6 +120,27 @@ generator_skills:
 | Round | Phase | QA Phase | Score | Duration | Notes |
 |-------|-------|----------|-------|----------|-------|
 ```
+
+### 5b. Pipeline Log (docs/harness/pipeline-log.md)
+
+서브에이전트 디스패치, 스킬 사용, 오케스트레이터 결정을 기록하는 상세 로그.
+
+```markdown
+# Pipeline Log
+
+| Timestamp | Phase | Actor | Event | Skills Used | Duration | Details |
+|-----------|-------|-------|-------|-------------|----------|---------|
+```
+
+**Actor**: `orchestrator`, `generator`, `evaluator`, `planner`, `contract`, `reviewer`, `team:teammate-N`
+**Event**: `dispatch`, `complete`, `judgment`, `skill-load`, `retry`, `phase-transition`, `error`
+
+로그 기록 규칙:
+- 에이전트 디스패치 시: `dispatch` 이벤트 (어떤 프롬프트/설정으로 보냈는지)
+- 에이전트 완료 시: `complete` 이벤트 (소요시간, 사용한 스킬 목록)
+- 오케스트레이터 판단 시: `judgment` 이벤트 (PASS/FAIL, 다음 단계 결정 이유)
+- 페이즈 전환 시: `phase-transition` 이벤트
+- 에러/재시도 시: `error` 또는 `retry` 이벤트
 
 ### 6. State (docs/harness/state.md)
 
@@ -138,6 +164,35 @@ resume_attempts: 0
 
 ### 7. Lock + Git Commit bootstrap files.
 
+## Pipeline Logging
+
+모든 페이즈에서 아래 패턴으로 `docs/harness/pipeline-log.md`에 로그를 추가합니다.
+
+### 에이전트 디스패치 시 (MANDATORY)
+```bash
+# 현재 시각 기록
+START_TIME=$(date +%s)
+```
+pipeline-log.md에 append:
+```
+| [ISO timestamp] | [phase] | orchestrator | dispatch | - | - | [agent type], config: [설정 요약] |
+```
+
+### 에이전트 완료 시 (MANDATORY)
+```bash
+END_TIME=$(date +%s)
+DURATION=$(( (END_TIME - START_TIME) / 60 ))m
+```
+에이전트 결과에서 사용된 스킬 목록을 읽고 pipeline-log.md에 append:
+```
+| [ISO timestamp] | [phase] | [actor] | complete | [skills list] | [duration] | [결과 요약] |
+```
+
+### 오케스트레이터 판단 시 (MANDATORY)
+```
+| [ISO timestamp] | [phase] | orchestrator | judgment | - | - | [PASS/FAIL], reason: [판단 근거], next: [다음 단계] |
+```
+
 ## Phase 1: Brainstorm (Main Session)
 
 <HARD-GATE>
@@ -152,8 +207,11 @@ Check `config.skills.brainstorm`:
 - If set: invoke `Skill(config.skills.brainstorm)` with the app description. After it completes, verify output is a spec file ONLY. If it generated code or plans, discard everything except the spec.
 - If empty: Read `skills/harness-brainstorm/SKILL.md` and follow its instructions directly.
 
+**Log**: dispatch(brainstorm) → complete(brainstorm, skills used, duration)
+
 Output: `docs/harness/specs/YYYY-MM-DD-<name>-spec.md`
 Update state.md: `current_phase: review`. Git commit.
+**Log**: phase-transition(brainstorm → review)
 
 ## Phase 2: Review (Agent Subprocesses)
 
@@ -167,6 +225,8 @@ Do NOT proceed to Phase 3 until all reviews pass.
 CEO Review의 목적은 범위를 줄이는 것이 아니라, 야심찬 제품을 만들기 위해 범위를 적절히 확장하는 것이다.
 "작게 만들자"는 기본 성향을 경계하라. Anthropic 글에서 Planner는 1-4문장을 16개 기능으로 확장했다.
 </HARD-GATE>
+
+**Log**: dispatch(ceo_review)
 
 Dispatch Agent subprocess:
 - If `config.skills.ceo_review` set: Agent prompt includes `Skill("config.skills.ceo_review")` instruction + SKILL RESTRICTION
@@ -188,9 +248,13 @@ Dispatch Agent subprocess:
 - "범위가 적절하고 야심차다" → continue
 - "범위가 너무 커서 현실적이지 않다" → spec 축소 요청 후 Phase 1로
 
+**Log**: complete(ceo_review, skills, duration) + judgment(review result, next step)
+
 ### 2b. Design Review (web only)
 
 Skip if app_type is not web.
+
+**Log**: dispatch(design_review)
 
 Dispatch Agent subprocess:
 - If `config.skills.design_review` set: Agent uses that skill + SKILL RESTRICTION
@@ -198,7 +262,11 @@ Dispatch Agent subprocess:
 
 Parse result: issues -> revise spec. Approved -> continue.
 
+**Log**: complete(design_review, skills, duration) + judgment(review result)
+
 ### 2c. Engineering Review
+
+**Log**: dispatch(eng_review)
 
 Dispatch Agent subprocess:
 - If `config.skills.eng_review` set: Agent uses that skill + SKILL RESTRICTION
@@ -206,18 +274,27 @@ Dispatch Agent subprocess:
 
 Parse result: tech change needed -> revise. Architecture issue -> Phase 1. Approved -> continue.
 
+**Log**: complete(eng_review, skills, duration) + judgment(review result)
+
 Update state.md: `current_phase: plan`. Git commit.
+**Log**: phase-transition(review → plan)
 
 ## Phase 3: Plan (Agent Subprocess)
+
+**Log**: dispatch(planner)
 
 Dispatch Agent with `skills/harness-planner/SKILL.md`:
 - Input: reviewed spec + references (if any)
 - Output: `docs/harness/plans/YYYY-MM-DD-plan.md`
 - Update state.md: plan path. Git commit.
 
+**Log**: complete(planner, skills, duration) + phase-transition(plan → contract)
+
 ## Phase 4: Contract Negotiation (Agent Subprocess)
 
 > "The generator proposed what it would build and how success would be verified, and the evaluator reviewed that proposal."
+
+**Log**: dispatch(contract)
 
 Dispatch Agent to negotiate contract:
 1. Read spec + plan
@@ -226,7 +303,10 @@ Dispatch Agent to negotiate contract:
 4. Iterate until agreed
 5. Output: `docs/harness/contract.md`
 
+**Log**: complete(contract, iteration count, duration)
+
 Update state.md: `current_phase: build`. Git commit.
+**Log**: phase-transition(contract → build)
 
 ## Phase 5: Build -> 3-Phase QA
 
@@ -244,13 +324,22 @@ round = 1
 LOOP (until Phase 5.1 PASS):
 
   ## Build
+  **Log**: dispatch(generator, round=N)
   Dispatch Generator Agent:
     - Read: contract.md + previous feedback (if round > 1) + generator profile + generator_skills
     - SKILL RESTRICTION applied
+    - **에이전트 프롬프트에 포함**: "완료 시 `docs/harness/handoff/round-N-gen.md`의 Skills Used 섹션에 로드한 스킬 목록을 기록하라"
     - Output: code + docs/harness/handoff/round-N-gen.md + Git commits
     - Log to build-log.md: round, "Build", duration
 
+  ## Handoff Validation (MANDATORY)
+  Read `docs/harness/handoff/round-N-gen.md` → check "Skills Used" section:
+  - If generator_skills are configured but Skills Used is empty or says "Built-in only" → **WARN** in pipeline-log and re-dispatch with explicit reminder
+  - If Skills Used lists skills that weren't in generator_skills → **WARN** (unauthorized skill)
+  **Log**: complete(generator, round=N, skills from handoff, duration)
+
   ## Functional QA (Evaluator Agent — fresh context)
+  **Log**: dispatch(evaluator, round=N, qa_phase=functional)
   Dispatch Evaluator Agent with qa_phase: "functional":
     - For web apps: agent-browser REQUIRED (Playwright MCP fallback)
     - Test EVERY contract criterion by actually using the app
@@ -258,10 +347,13 @@ LOOP (until Phase 5.1 PASS):
     - Stub detection: setTimeout simulations, hardcoded data, no-op handlers = FAIL
     - End-to-end: create -> persist -> refresh -> still exists
     - Generator self-assessment ("38/38 DONE") must be IGNORED
+    - **에이전트 프롬프트에 포함**: "완료 시 feedback 파일의 Tools & Skills Used 섹션에 사용한 브라우저 도구와 스킬을 기록하라"
     - Output: docs/harness/feedback/round-N-functional.md (PASS/FAIL + score)
     - Log to build-log.md
+  **Log**: complete(evaluator, round=N, qa_phase=functional, skills/tools from feedback, duration)
 
   ## Judgment
+  **Log**: judgment(functional, PASS/FAIL, score, reason, next step)
   PASS (zero FAIL criteria + zero stubs) -> Phase 5.2
   FAIL -> round += 1, Generator fixes, re-test
 ```
@@ -274,6 +366,7 @@ PASS criteria: Design score 7+, console error 0, all interaction states present.
 LOOP (until Phase 5.2 PASS):
 
   ## Quality QA (Evaluator Agent — fresh context, different perspective)
+  **Log**: dispatch(evaluator, round=N, qa_phase=quality)
   Dispatch Evaluator Agent with qa_phase: "quality":
     - Design consistency: hierarchy, typography, spacing, color system
     - AI slop detection: generic gradients, default components, stock placeholders
@@ -281,10 +374,13 @@ LOOP (until Phase 5.2 PASS):
     - Console: ZERO errors (warnings OK)
     - Responsive: test at mobile viewport (375px)
     - Accessibility: keyboard navigation works, contrast adequate
+    - **에이전트 프롬프트에 포함**: "완료 시 feedback 파일의 Tools & Skills Used 섹션에 사용한 도구/스킬을 기록하라"
     - Output: docs/harness/feedback/round-N-quality.md (PASS/FAIL + score)
     - Log to build-log.md
+  **Log**: complete(evaluator, round=N, qa_phase=quality, tools/skills, duration)
 
   ## Judgment
+  **Log**: judgment(quality, PASS/FAIL, score, reason, next step)
   PASS (design 7+, console error 0, states present) -> Phase 5.3
   FAIL -> Generator fixes, re-test
 ```
@@ -300,6 +396,8 @@ PASS criteria: ALL teammates PASS. Adversarial reviewer finds no additional issu
 ```
 ## Web App: Agent Team (5 parallel testers + 1 reviewer)
 
+**Log**: dispatch(team, round=N, qa_phase=comprehensive, teammates=6)
+
 Dispatch Agent Team with 6 teammates:
 
   Teammate 1: Component Tester
@@ -307,12 +405,15 @@ Dispatch Agent Team with 6 teammates:
     - For EACH component: render, interact, verify state changes
     - Test props/events/conditional rendering
     - Use agent-browser: open page → snapshot → click each interactive element → verify
+    - **If web app**: load `web-design-guidelines` skill for design compliance checking
+    - **Output footer에 포함**: Tools & Skills Used + 실행한 테스트 케이스 수 + PASS/FAIL 수
     - Output: docs/harness/feedback/round-N-components.md
 
   Teammate 2: E2E Flow Tester
     - Test every user journey from spec (signup → core feature → completion)
     - Use agent-browser for full flow: navigate → fill → submit → verify result
     - Test data persistence: create → navigate away → come back → still exists?
+    - **Output footer에 포함**: Tools & Skills Used + 실행한 테스트 케이스 수 + PASS/FAIL 수
     - Output: docs/harness/feedback/round-N-e2e.md
 
   Teammate 3: Edge Case Tester
@@ -323,6 +424,7 @@ Dispatch Agent Team with 6 teammates:
     - Boundary: 0 items, 1 item, 100 items
     - Empty states: no data, all deleted, first-time user
     - Error recovery: after error, can user continue?
+    - **Output footer에 포함**: Tools & Skills Used + 실행한 테스트 케이스 수 + PASS/FAIL 수
     - Output: docs/harness/feedback/round-N-edge.md
 
   Teammate 4: DevTools Inspector (web apps — uses Chrome DevTools MCP)
@@ -336,6 +438,7 @@ Dispatch Agent Team with 6 teammates:
       mcp__chrome-devtools__lighthouse_audit,
       mcp__chrome-devtools__take_memory_snapshot,
       mcp__chrome-devtools__performance_start_trace / stop_trace
+    - **Output footer에 포함**: Tools & Skills Used + audit 결과 요약
     - Output: docs/harness/feedback/round-N-devtools.md
 
   Teammate 5: Test Case Generator (먼저 실행, 결과를 1-4에게 전달)
@@ -351,6 +454,7 @@ Dispatch Agent Team with 6 teammates:
       - DevTools/performance cases → Teammate 4
     - Output: docs/harness/feedback/round-N-testcases.md + docs/harness/test-cases.md
     - 매 라운드마다 코드를 다시 분석해서 케이스 업데이트
+    - **Output footer에 포함**: 총 생성 케이스 수 (카테고리별 breakdown)
 
   Teammate 6: Adversarial Reviewer (모든 결과가 나온 후 실행)
     - Read test-cases.md: "빠진 케이스가 있다" → 추가 케이스 생성
@@ -359,9 +463,45 @@ Dispatch Agent Team with 6 teammates:
       - "이 케이스 실행 안 했다" → FAIL 처리
       - "Teammate 2가 PASS인데 Teammate 1 결과와 모순" → 지적
     - test-cases.md의 케이스 중 실행되지 않은 것 식별
+    - **Output footer에 포함**: 추가 생성한 케이스 수 + 발견된 모순/미실행 수
     - Output: docs/harness/feedback/round-N-adversarial.md
 
+**Log**: complete(team, round=N, per-teammate: {name, duration, tools/skills used, test cases run/pass/fail})
+
+## Test Case Summary Log (MANDATORY after team complete)
+오케스트레이터가 팀 완료 후 pipeline-log.md에 테스트 케이스 요약을 기록:
+```
+| [timestamp] | build:5.3 | orchestrator | test-summary | - | - | Total: N cases, PASS: X, FAIL: Y, UNTESTED: Z. By category: component(N), e2e(N), edge(N), devtools(N). Adversarial additions: N |
+```
+또한 `docs/harness/test-cases.md`의 실행 결과를 `docs/harness/feedback/round-N-test-summary.md`에 통합 요약 작성:
+```markdown
+# Test Case Execution Summary - Round N
+
+## Overview
+- Total cases generated: [N]
+- Executed: [N] / Skipped: [N]
+- PASS: [N] / FAIL: [N]
+- Adversarial additions: [N]
+
+## By Category
+| Category | Generated | Executed | PASS | FAIL |
+|----------|-----------|----------|------|------|
+| Component | N | N | N | N |
+| E2E | N | N | N | N |
+| Edge Case | N | N | N | N |
+| Performance | N | N | N | N |
+
+## Failed Cases
+| # | Category | Component | Action | Expected | Actual | Teammate |
+|---|----------|-----------|--------|----------|--------|----------|
+...
+
+## Unexecuted Cases (flagged by Adversarial)
+...
+```
+
 ## Team Lead Judgment
+  **Log**: judgment(comprehensive, PASS/FAIL, details per teammate, next step)
   Read all 6 outputs:
     ALL teammates PASS + Adversarial finds nothing new → Phase 5.3 PASS → Ship
     ANY teammate FAIL or Adversarial finds issues → Generator fixes → re-run failed teammates
@@ -378,6 +518,8 @@ No round limit across all phases. Repeat until PASS within each phase.
 
 ## Phase 6: Ship
 
+**Log**: dispatch(ship) + phase-transition(build → ship)
+
 Check `config.skills.ship`:
 - If set: Dispatch Agent with that skill + SKILL RESTRICTION
 - If empty: Built-in:
@@ -385,7 +527,9 @@ Check `config.skills.ship`:
   2. `gh pr create` with summary
   3. Display PR URL
 
-Display final summary with build-log.md table:
+**Log**: complete(ship, duration) + pipeline-complete
+
+Display final summary with build-log.md table + pipeline-log.md summary:
 ```
 Pipeline complete!
 Project: [name]

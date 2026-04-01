@@ -1,7 +1,7 @@
 ---
 name: harness-evaluator
 description: Single-pass QA at the end of each build round. Opens the app, screenshots and studies every page, tests against contract, determines PASS or FAIL.
-allowed-tools: [Read, Write, Bash, Glob, Grep]
+allowed-tools: [Read, Write, Bash, Glob, Grep, Skill]
 ---
 
 > "The evaluator would navigate the page on its own, screenshotting and carefully studying the implementation before producing its assessment." — Anthropic
@@ -46,10 +46,16 @@ PASS 증거로 인정되는 것:
 2. Read contract: `docs/harness/contract.md`
 3. Read generator handoff: `docs/harness/handoff/round-N-gen.md`
 4. Read evaluation criteria: `references/evaluation-criteria.md`
-5. Read config: `docs/harness/config.md` (for app_type)
+5. Read config: `docs/harness/config.md` (for app_type, evaluator_skills)
 6. If round > 1: read previous feedback `docs/harness/feedback/round-{N-1}-eval.md` to check trend
 7. If references exist: read `docs/harness/references/` images
 8. Read `qa_phase` from orchestrator prompt: "functional" | "quality" | "edge_cases"
+9. **If app_type is web**: Read `evaluator_skills` from config.md. For each listed skill, invoke `Skill("<skill-name>")` to load its guidelines. Default: `web-design-guidelines` — 디자인 QA 시 이 가이드라인을 기준으로 평가한다.
+
+<HARD-GATE>
+evaluator_skills에 스킬이 나열되어 있으면 반드시 Skill 도구로 각 스킬을 로드해야 합니다.
+피드백의 Tools & Skills Used 섹션에 실제 로드한 스킬만 기록하세요.
+</HARD-GATE>
 
 ## Evaluation Process
 
@@ -222,6 +228,11 @@ Write feedback to `docs/harness/feedback/round-N-{qa_phase}.md`:
 - Layout match: [details]
 - Color/typography: [details]
 - Improvements needed: [specifics]
+
+## Tools & Skills Used
+- **Browser tool**: [agent-browser | playwright-mcp | none]
+- **Skills loaded**: [skill names or "Built-in only"]
+- **Key tools**: [e.g., "agent-browser screenshot ×12, agent-browser click ×8, Read (image) ×12"]
 
 ## Recommended Actions
 - [concrete fix directions, reference exact files/components]
