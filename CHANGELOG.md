@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2026-04-01
+
+### Fixed
+- **스크린샷 저장 경로 통일** — 라운드별 `docs/harness/screenshots/round-N/` 디렉토리에 저장
+  - 파일명 규칙: `explore-{page}.png`, `criterion-{n}.png`, `edge-{scenario}.png`, `devtools-{type}.png`
+  - Evaluator, browser-qa evaluator, 오케스트레이터 Bootstrap 모두 통일
+  - README Pipeline Output에 screenshots/ 추가
+
 ## [0.7.0] - 2026-04-01
 
 ### Added

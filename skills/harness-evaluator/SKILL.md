@@ -100,7 +100,23 @@ mcp__playwright__browser_take_screenshot()
 mcp__playwright__browser_console_messages()
 ```
 
-#### Step 2: Start the app
+#### Step 2: Screenshot Directory + Start the app
+
+```bash
+# 라운드별 스크린샷 디렉토리 생성
+mkdir -p docs/harness/screenshots/round-N
+```
+
+모든 스크린샷은 `docs/harness/screenshots/round-N/` 에 저장합니다. 파일명 규칙:
+- `explore-{page-name}.png` — 탐색 단계
+- `criterion-{number}.png` — 계약 기준 검증
+- `edge-{scenario}.png` — 엣지 케이스
+- `devtools-{type}.png` — DevTools 감사
+
+agent-browser 사용 시:
+```bash
+agent-browser screenshot docs/harness/screenshots/round-N/explore-home.png
+```
 
 Read dev server command from handoff. Start in background, poll until ready (max 30s).
 

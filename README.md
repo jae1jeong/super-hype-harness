@@ -106,6 +106,7 @@ docs/harness/
 ├── handoff/         # Generator → Evaluator handoff per round
 ├── feedback/        # Evaluator feedback per round
 ├── references/      # Reference screenshots and images
+├── screenshots/     # Evaluator screenshots per round (round-1/, round-2/...)
 ├── build-log.md     # Round history (phase, score, duration)
 ├── state.md         # Pipeline state + next_role
 └── config.md        # Configuration

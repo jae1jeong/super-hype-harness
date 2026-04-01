@@ -22,7 +22,7 @@ agent-browser open http://localhost:PORT
 agent-browser snapshot                      # Page structure + refs (@e1, @e2...)
 agent-browser click "@e1"                   # Click by ref
 agent-browser fill "@e3" "test input"       # Fill form
-agent-browser screenshot                    # Capture evidence
+agent-browser screenshot docs/harness/screenshots/round-N/{name}.png  # Save to round dir
 agent-browser console                       # JS errors
 agent-browser close                         # Close browser
 ```
@@ -54,11 +54,19 @@ mcp__playwright__browser_close()            # Close browser
       - Errors: check console for JS errors
 4. Stop dev server
 
+## Screenshot Storage
+
+모든 스크린샷은 `docs/harness/screenshots/round-N/` 에 저장:
+```bash
+mkdir -p docs/harness/screenshots/round-N
+agent-browser screenshot docs/harness/screenshots/round-N/criterion-01.png
+```
+
 ## Evidence Format
 
 For each verification:
 - URL visited
 - Actions performed (with element refs)
 - Expected vs actual result
-- Screenshot path
+- Screenshot path (`docs/harness/screenshots/round-N/{name}.png`)
 - Visual analysis from Read tool

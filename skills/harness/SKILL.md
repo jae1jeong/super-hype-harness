@@ -44,6 +44,7 @@ docs/harness/plans/
 docs/harness/handoff/
 docs/harness/feedback/
 docs/harness/references/
+docs/harness/screenshots/
 ```
 
 ### 2. Reference Capture (if --ref provided)
