@@ -5,10 +5,18 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.6.0] - 2026-03-31
+## [0.6.0] - 2026-04-01
 
 ### Added
 - **3단계 심화 QA** — 단일 QA 루프를 3-phase progressive QA로 교체
+- **Phase 5.3 Agent Team** — 웹앱 테스트를 6개 병렬 Agent로 확장:
+  - Component Tester: 모든 UI 컴포넌트 단위 테스트
+  - E2E Flow Tester: 사용자 여정 전체 테스트
+  - Edge Case Tester: 입력 남용, 연타, 네비게이션, 경계값
+  - DevTools Inspector: Lighthouse, console, network, memory, 접근성 감사
+  - Test Case Generator: 50+ 테스트 케이스 문서 자동 생성
+  - Adversarial Reviewer: 다른 5개 결과를 교차 검증, 빠진 시나리오 탐지
+- **Chrome DevTools MCP 통합** — console error, network 실패, Lighthouse 감사, 메모리 스냅샷
   - Phase 1 (Functional): Contract 기준 실제 동작 확인 + stub/가짜 기능 제로
   - Phase 2 (Quality): 디자인 7+, console error 0, 반응형, 인터랙션 상태, 접근성
   - Phase 3 (Edge Cases): 입력 남용, 연타, 뒤로가기, 대용량 파일, 경계값, 빈 상태, 에러 복구
