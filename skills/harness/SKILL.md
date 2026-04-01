@@ -102,15 +102,21 @@ skills:
   frontend: vercel-react-best-practices  # web app Generator가 프론트엔드 코딩 시 참조
   design_guidelines: web-design-guidelines  # web app Evaluator가 디자인 QA 시 참조 (built-in)
 
-# Generator reference skills (web apps)
-generator_skills:
-  - frontend-design
-  - vercel-react-best-practices
+# Generator가 빌드 시 참조할 스킬
+# IMPORTANT: app_type: web이면 아래 기본값을 반드시 채워서 생성할 것.
+# 빈 배열([])로 생성하면 Generator가 스킬 없이 빌드하게 됨.
+generator_skills:     # app_type: web 기본값 ↓
+  - frontend-design          # Anthropic frontend design skill
+  - vercel-react-best-practices  # Vercel/React best practices
+# app_type: cli → generator_skills: []
+# app_type: library → generator_skills: []
 
 # Evaluator reference skills (web apps)
 evaluator_skills:
   - web-design-guidelines
 ```
+
+> **주의**: `generator_skills: []` (빈 배열)로 생성하지 마세요. web 앱이면 반드시 기본 스킬을 포함해야 합니다.
 
 ### 5. Build Log (docs/harness/build-log.md)
 
