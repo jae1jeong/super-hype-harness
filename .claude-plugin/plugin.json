@@ -1,7 +1,7 @@
 {
   "name": "super-hype-harness",
   "description": "Long-running app development harness: Planner → Generator → Evaluator with file-based handoff. No sprints — build everything, then QA.",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "author": {
     "name": "jaewon"
   },

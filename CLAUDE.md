@@ -18,7 +18,7 @@ Version 0.8.0. Skill-only project — no build step, no test suite. All logic in
 
 ## Repository Structure
 
-- `skills/` — Pipeline role skills
+- `skills/` — Pipeline role skills (harness-retro 포함)
 - `generators/` — Generator presets (default, frontend)
 - `evaluators/` — Evaluator presets (default, browser-qa, design-qa)
 - `hooks/stop-failure-handler.sh` — Rate-limit auto-resume hook
