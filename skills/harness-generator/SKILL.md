@@ -36,10 +36,17 @@ Update `docs/harness/state.md`:
 
 Work through the spec feature by feature:
 1. Start with project scaffolding and dev environment
-2. Implement features in dependency order
-3. If references exist, match their visual patterns and interactions
-4. Commit frequently with descriptive messages
-5. Use git for version control throughout
+2. **Set up test runner** (MANDATORY for web/cli apps):
+   - Web (Next.js/React): `vitest` + `@testing-library/react`
+   - Web (vanilla): `vitest`
+   - CLI (Node): `vitest` or `jest`
+   - CLI (Python): `pytest`
+   - Add `test` script to package.json / pyproject.toml
+3. Implement features in dependency order
+4. **Write unit tests for core logic** — game engines, reducers, scoring, state management 등 순수 함수에 대해 최소한의 unit test 작성. UI 컴포넌트 테스트는 선택.
+5. If references exist, match their visual patterns and interactions
+6. Commit frequently with descriptive messages
+7. Use git for version control throughout
 
 ### Round 2+: Fix Based on Feedback
 

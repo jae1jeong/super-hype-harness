@@ -5,12 +5,17 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.8.1] - 2026-04-01
+## [0.8.1] - 2026-04-02
 
 ### Fixed
 - **generator_skills 빈 배열 버그** — config.md에 `generator_skills: []`로 생성되면 Generator가 스킬 없이 빌드하는 문제
   - harness-generator: 빈 배열 + web app일 때 `frontend-design`, `vercel-react-best-practices` 자동 폴백
   - harness (bootstrap): config 생성 시 빈 배열 금지 경고 + app_type별 기본값 명시
+- **Evaluator 중복 QA 제거** — 이전 라운드 PASS 기준 반복 테스트 방지
+  - Prior Results Map 도입 (CONFIRMED_PASS / NEEDS_REGRESSION / NEEDS_RETEST / NEW)
+  - 팀 분할 시 contract 기준 범위 겹침 금지
+  - 테스트 케이스 생성 시 실행 가능성 선행 검사 (테스트 러너 미설치 → unit test 생성 스킵)
+  - P0만 실행, P1/P2는 리포트만
 
 ### Added
 - **harness-retro 스킬** — 하네스로 만든 프로젝트의 회고 스킬
@@ -18,6 +23,7 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - Anthropic 원문 8가지 핵심 원칙 대비 파이프라인 충실도 분석
   - README 상태 검증 및 교체 초안 자동 생성
   - Keep / Improve / Try 회고 보고서 출력
+- **Generator에 테스트 러너 설치 + unit test 작성 의무화** — Round 1 빌드 시 vitest/jest/pytest 설정 및 핵심 로직 unit test 포함
 
 ## [0.4.0] - 2026-03-29
 

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Super Hype Harness is a **Claude Code plugin** for long-running app development. File-based handoff between Planner, Generator, and Evaluator in one continuous session. No sprints — the Generator builds everything, then the Evaluator tests in a single pass.
 
-Version 0.4.0. Skill-only project — no build step, no test suite. All logic in SKILL.md files.
+Version 0.8.1. Skill-only project — no build step, no test suite. All logic in SKILL.md files.
 
 ## Architecture — Anthropic V2
 
@@ -16,6 +16,8 @@ Version 0.4.0. Skill-only project — no build step, no test suite. All logic in
 - **Build → QA rounds**. Generator builds entire app → Evaluator tests → if FAIL, Generator fixes → Evaluator re-tests (up to max_rounds).
 - **Contract negotiation**. Generator proposes what to build, Evaluator reviews, iterate until agreed.
 - **Screenshot-and-study**. Evaluator takes screenshots, reads them with Read tool for visual analysis.
+- **Anti-duplication QA**. Evaluator는 이전 라운드 PASS 기준을 반복 테스트하지 않음. Prior Results Map으로 중복 제거.
+- **Generator unit test 의무화**. Round 1에서 테스트 러너 설치 + 핵심 로직 unit test 작성.
 - **Planner creates visual design language** using frontend design skill reference.
 
 ## Repository Structure
