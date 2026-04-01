@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-04-01
+
+### Added
+- **`/harness-release` 스킬** — 버전 범프, CHANGELOG 생성, 태그, push, GitHub Release를 자동화
+  - `patch` / `minor` / `major` + `--dry-run` 지원
+  - 코드 diff 분석으로 커밋 메시지보다 정확한 CHANGELOG 생성
+  - README/README.ko.md 동기화 체크
+- **CEO Review 범위 확장 HARD-GATE** — "작게 만들자" 축소 경향 방지, 야심찬 제품을 위한 범위 확장 체크
+- **Agent Team 케이스 전달 구조** — Test Case Generator가 먼저 실행 → 100+ 케이스를 Teammate 1-4에게 SendMessage로 전달
+- **Adversarial Reviewer 강화** — 실행 안 된 케이스 식별 + PASS 증거 없으면 FAIL 처리
+
 ## [0.6.0] - 2026-04-01
 
 ### Added

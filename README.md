@@ -124,6 +124,7 @@ docs/harness/
 | `harness-evaluator` | role | Screenshot, study, test, judge (PASS/FAIL) |
 | `harness-qa` | standalone | Standalone QA outside pipeline |
 | `harness-resume` | internal | Resume from rate limit |
+| `/harness-release` | user-invoked | Version bump + CHANGELOG + tag + push + GitHub Release |
 
 ## Configuration
 
