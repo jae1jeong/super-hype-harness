@@ -74,11 +74,17 @@ skills:
   code_review:
   ship:
 
-# Generator가 빌드 시 참조할 스킬 (app_type: web일 때 기본 적용)
-generator_skills:
+# Generator가 빌드 시 참조할 스킬
+# IMPORTANT: app_type: web이면 아래 기본값을 반드시 채워서 생성할 것.
+# 빈 배열([])로 생성하면 Generator가 스킬 없이 빌드하게 됨.
+generator_skills:     # app_type: web 기본값 ↓
   - frontend-design          # Anthropic frontend design skill
   - vercel-react-best-practices  # Vercel/React best practices
+# app_type: cli → generator_skills: []
+# app_type: library → generator_skills: []
 ```
+
+> **주의**: `generator_skills: []` (빈 배열)로 생성하지 마세요. web 앱이면 반드시 기본 스킬을 포함해야 합니다.
 
 ### 4. Build Log (docs/harness/build-log.md)
 

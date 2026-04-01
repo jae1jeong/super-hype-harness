@@ -5,7 +5,12 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.1] - 2026-04-01
+## [0.8.1] - 2026-04-01
+
+### Fixed
+- **generator_skills 빈 배열 버그** — config.md에 `generator_skills: []`로 생성되면 Generator가 스킬 없이 빌드하는 문제
+  - harness-generator: 빈 배열 + web app일 때 `frontend-design`, `vercel-react-best-practices` 자동 폴백
+  - harness (bootstrap): config 생성 시 빈 배열 금지 경고 + app_type별 기본값 명시
 
 ### Added
 - **harness-retro 스킬** — 하네스로 만든 프로젝트의 회고 스킬
