@@ -106,10 +106,13 @@ skills:
 # IMPORTANT: app_type: web이면 아래 기본값을 반드시 채워서 생성할 것.
 # 빈 배열([])로 생성하면 Generator가 스킬 없이 빌드하게 됨.
 generator_skills:     # app_type: web 기본값 ↓
-  - frontend-design          # Anthropic frontend design skill
+  - tdd-workflow               # TDD: RED→GREEN→REFACTOR, 테스트 피라미드 기반 개발
+  - frontend-design            # Anthropic frontend design skill
   - vercel-react-best-practices  # Vercel/React best practices
-# app_type: cli → generator_skills: []
-# app_type: library → generator_skills: []
+# app_type: cli 기본값:
+#   - tdd-workflow
+# app_type: library 기본값:
+#   - tdd-workflow
 
 # Evaluator reference skills (web apps)
 evaluator_skills:
