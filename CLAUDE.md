@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Super Hype Harness is a **Claude Code plugin** for long-running app development. Agent subprocess per phase (context reset) + Build/QA rounds + config-based skill whitelist.
 
-Version 0.8.0. Skill-only project — no build step, no test suite. All logic in SKILL.md files.
+Version 0.8.1. Skill-only project — no build step, no test suite. All logic in SKILL.md files.
 
 ## Architecture — V3 (Agent subprocess + Build/QA rounds)
 
@@ -15,10 +15,12 @@ Version 0.8.0. Skill-only project — no build step, no test suite. All logic in
 - **Skill whitelist** — config.skills controls which skills sub-agents can use. External skill chaining blocked.
 - **Contract negotiation** — Generator proposes, Evaluator reviews, iterate until agreed.
 - **Screenshot-and-study** — Evaluator takes screenshots, reads them with Read tool for visual analysis.
+- **Anti-duplication QA** — Evaluator는 이전 라운드 PASS 기준을 반복 테스트하지 않음. Prior Results Map으로 중복 제거.
+- **Generator unit test 의무화** — Round 1에서 테스트 러너 설치 + 핵심 로직 unit test 작성.
 
 ## Repository Structure
 
-- `skills/` — Pipeline role skills
+- `skills/` — Pipeline role skills (harness-retro 포함)
 - `generators/` — Generator presets (default, frontend)
 - `evaluators/` — Evaluator presets (default, browser-qa, design-qa)
 - `hooks/stop-failure-handler.sh` — Rate-limit auto-resume hook
