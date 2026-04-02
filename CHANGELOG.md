@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.2] - 2026-04-02
+
+### Added
+- **회고 스킬 P9: 테스트 케이스 중복 검사** — Teammate 간 중복 테스트 식별 체크리스트, 분석 방법론(완전 중복/부분 중복/의도적 교차검증 분류), 중복 비율 20% 기준, 보고서 템플릿 행 추가
+
 ## [0.8.1] - 2026-04-02
 
 ### Fixed
