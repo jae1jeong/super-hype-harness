@@ -57,55 +57,88 @@ evaluator_skills에 스킬이 나열되어 있으면 반드시 Skill 도구로 �
 피드백의 Tools & Skills Used 섹션에 실제 로드한 스킬만 기록하세요.
 </HARD-GATE>
 
-## Anti-Duplication Rules
-
-### Prior Results Map
-
-이전 라운드 feedback을 **전부** 읽은 후, 각 contract 기준의 상태를 분류하라:
+## 테스트 피라미드
 
 ```
-NEEDS_RETEST   — 이전 라운드에서 FAIL 또는 INCONCLUSIVE → 최우선 테스트
-NEEDS_REGRESSION — 이전 라운드에서 PASS였지만 이번 라운드에서 관련 코드 변경 있음
-STABLE_PASS    — 이전 라운드에서 PASS + 관련 코드 변경 없음
-NEW            — 이전에 테스트되지 않은 기준
+         /  E2E (브라우저)  \      ← 느리고 비쌈. 시각/인터랙션/실제 유저 플로우만
+        /  Integration      \     ← 컴포넌트 조합, API 연동
+       /    Unit Tests        \   ← 빠르고 확실. 순수 로직은 여기서 최대한 해결
 ```
-
-### 테스트 전략
-
-**모든 기준은 매 라운드 전부 테스트한다.** 코드 수정이 다른 기능에 회귀 버그를 일으킬 수 있으므로 "스킵"은 없다. 대신 **테스트 순서와 깊이**를 조절한다:
-
-| 상태 | 순서 | 테스트 방법 |
-|------|------|------------|
-| NEEDS_RETEST | 1순위 (먼저) | 전체 테스트 — contract에 명시된 정확한 절차대로 실행 + 스크린샷 + 증거 |
-| NEEDS_REGRESSION | 2순위 | 전체 테스트 — 코드가 바뀌었으면 이전 PASS를 신뢰하지 않음 |
-| NEW | 3순위 | 전체 테스트 |
-| STABLE_PASS | 4순위 (마지막) | 전체 테스트 — 단, 이전 증거와 비교하여 동일하면 "이전 라운드 결과와 동일" 기록 가능 |
 
 <HARD-GATE>
-"빠른 스팟체크"나 "스크린샷 1장으로 확인"은 테스트가 아닙니다. 모든 기준은 contract에 명시된 Test/Expected/Evidence 절차를 따라야 합니다. STABLE_PASS라도 대충 확인하면 안 됩니다 — 회귀 버그는 "변경하지 않은" 코드에서도 발생합니다.
+Unit test로 증명할 수 있는 것을 브라우저로 테스트하지 마세요.
+
+예시 — blockblast의 `calculateScore(4cells, 2lines, streak=0)` → 34점:
+- ❌ 브라우저에서 블록을 배치하여 2줄을 완성하고 점수를 확인 (5분, 불확실)
+- ✅ `npm test` — calculateScore unit test가 34를 반환하는지 확인 (1초, 확실)
+
+브라우저 테스트는 unit test로 증명 불가능한 것에만 사용합니다:
+- 화면에 점수가 **표시되는지** (렌더링)
+- 블록을 **드래그할 수 있는지** (인터랙션)
+- Liquid Glass UI가 **보이는지** (시각 디자인)
+- 페이지 **새로고침 후 복원**되는지 (브라우저 동작)
 </HARD-GATE>
 
-### 중복 제거가 필요한 곳
+### Step 0: Unit Test 먼저 실행 (브라우저 열기 전)
 
-테스트를 줄이는 게 아니라, **같은 테스트를 여러 번 하는 것**을 없앤다:
+Generator가 unit test를 작성했으면 (`npm test` / `pytest` 등), **브라우저를 열기 전에** 먼저 실행하라:
 
-1. **팀 간 영역 겹침 금지**: 여러 에이전트/팀으로 분할 시 contract 기준 범위를 겹치지 않게 배정
+```bash
+npm test 2>&1 || true
+```
+
+결과를 분석하여 contract 기준별로 분류:
+
+```
+UNIT_PROVEN    — unit test가 PASS하여 로직이 검증됨 (예: 점수 계산, 게임오버 판정, 줄 클리어)
+UNIT_FAILED    — unit test가 FAIL → 브라우저 테스트 불필요, 바로 FAIL 판정
+UNIT_MISSING   — unit test가 없음 → 브라우저에서 직접 테스트 필요
+NEEDS_BROWSER  — unit test로 증명 불가능 (시각, 인터랙션, 브라우저 동작)
+```
+
+### 기준별 테스트 계층 결정
+
+각 contract 기준에 대해 **가장 낮은 계층에서 증명**하라:
+
+| contract 기준 예시 | 적합한 계층 | 이유 |
+|-------------------|------------|------|
+| C10 점수 계산 (3칸=3점, 2줄=30점) | **Unit** | 순수 함수 `calculateScore`로 검증 |
+| C07 가로 줄 클리어 | **Unit** | `checkLinesToClear` + `clearLines` 순수 함수 |
+| C12 게임 오버 감지 | **Unit** | `isGameOver(grid, pieces)` 순수 함수 |
+| C18 새로고침 후 복원 | **Browser** | localStorage + 브라우저 새로고침 필요 |
+| C04 마우스 드래그 앤 드롭 | **Browser** | 실제 마우스 인터랙션 필요 |
+| C34 Liquid Glass 디자인 | **Browser** | 시각적 확인 필요 |
+| C11 점수 **표시** | **Browser** | 로직은 unit, 렌더링은 브라우저 |
+
+### 브라우저 테스트 범위
+
+Unit test로 로직이 검증된 기준이라도, **UI에 반영되는지**는 브라우저에서 확인해야 할 수 있다. 이때는:
+
+- 로직 검증: unit test 결과를 증거로 인용 (`npm test` PASS 기록)
+- UI 반영 확인: 브라우저에서 스크린샷 1장으로 **표시 여부만** 확인 (세부 수치는 unit에서 검증 완료)
+
+예: C10 점수 시스템
+- `calculateScore(4, 2, 0) === 34` → unit test PASS (로직 증명 완료)
+- 브라우저에서 "점수가 0이 아닌 숫자로 표시되는가" 정도만 확인 (세부 수치 검증은 unit이 담당)
+
+### 팀 분할 시 중복 제거
+
+여러 에이전트/팀으로 분할할 경우:
+
+1. **contract 기준 범위를 겹치지 않게 배정**
    ```
    Teammate 1: C01~C12 (빌드, 보드, 드래그, 클리어, 점수, 게임오버)
    Teammate 2: C13~C24 (재시작, 애니메이션, 사운드, 저장, 공유, 통계, 타임어택)
    Teammate 3: C25~C35 (모드전환, 테마, 튜토리얼, 반응형, 접근성, 디자인) + Edge cases
    ```
-2. **이전 라운드 피드백에 이미 보고된 버그를 다시 보고하지 않음**: "Round 1에서 보고된 BUG-01과 동일" 한 줄로 충분
-3. **같은 기능을 unit + integration + e2e 3계층에서 반복 생성하지 않음**: 테스트 케이스 생성 시 하나의 기능에 대해 가장 적합한 1개 계층만 선택
+2. **이전 라운드에서 이미 보고된 버그를 재보고하지 않음**
+3. **unit test로 커버된 기준은 브라우저 테스트에서 로직 세부 검증을 반복하지 않음**
 
 ### 테스트 케이스 생성 규칙
 
-테스트 케이스를 자동 생성할 때:
-
-1. **실행 가능성 선행 검사**: 테스트 러너(jest/vitest/pytest 등)가 설치되어 있는지 확인. 없으면 unit test 생성 스킵 → 대신 "Generator에게 테스트 러너 설치 요청" 피드백.
-2. **모든 우선순위 실행**: P0/P1/P2 모두 실행 대상. 우선순위는 실행 순서만 결정한다 (P0 먼저).
-3. **Contract 기준 기반 생성**: 기존 contract 기준을 세분화하는 방식으로 생성. contract에 없는 완전히 새로운 기준을 대량 생성하지 않음.
-4. **계층 중복 금지**: `canPlaceAt` 함수를 unit(10개) + integration(2개) + e2e(1개)로 13개 만들지 않음. unit test가 있으면 integration/e2e에서는 해당 함수의 세부 케이스를 생략.
+1. **테스트 러너 확인**: `npm test` 가능한지 먼저 확인. 불가능하면 Generator에게 설치 요청 피드백.
+2. **피라미드 원칙**: 순수 함수 → unit, 컴포넌트 조합 → integration, 유저 플로우/시각 → e2e. 같은 로직을 여러 계층에서 반복하지 않음.
+3. **Contract 기준 기반**: contract 기준을 세분화하여 생성. contract에 없는 기준을 대량 생성하지 않음.
 
 ## Evaluation Process
 

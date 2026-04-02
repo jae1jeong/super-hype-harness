@@ -49,7 +49,12 @@ Work through the spec feature by feature:
    - CLI (Python): `pytest`
    - Add `test` script to package.json / pyproject.toml
 3. Implement features in dependency order
-4. **Write unit tests for core logic** — game engines, reducers, scoring, state management 등 순수 함수에 대해 최소한의 unit test 작성. UI 컴포넌트 테스트는 선택.
+4. **Write unit tests — 테스트 피라미드의 바닥층 담당**:
+   - 순수 함수(계산, 판정, 변환)는 **반드시** unit test 작성
+   - 예: 점수 계산, 게임오버 판정, 줄 클리어 로직, 상태 리듀서, 유효성 검증
+   - Evaluator가 브라우저에서 검증하기 어려운 로직일수록 unit test가 중요
+   - UI 컴포넌트 렌더링 테스트는 선택 (Evaluator가 브라우저로 확인)
+   - `npm test`가 PASS하면 Evaluator는 해당 로직을 브라우저에서 재검증하지 않음
 5. If references exist, match their visual patterns and interactions
 6. Commit frequently with descriptive messages
 7. Use git for version control throughout
