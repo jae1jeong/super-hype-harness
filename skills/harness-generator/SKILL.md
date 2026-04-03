@@ -75,7 +75,7 @@ Read the Evaluator's feedback carefully:
 
 Before handing off:
 - **Build succeeds**: run build command, confirm exit code 0
-- **Tests pass**: run tests (if they exist), confirm all pass
+- **Tests pass**: run `npm test` (or equivalent), confirm all pass. 테스트 파일이 0개면 FAIL — Round 1에서 반드시 테스트 러너 설치 + unit test 작성이 필요함.
 - **Contract self-check**: for each criterion, run the verification and record result
 - **Reference check**: if references exist, visually compare your implementation
 

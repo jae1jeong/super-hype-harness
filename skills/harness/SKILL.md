@@ -1,7 +1,7 @@
 ---
 name: harness
 description: Long-running app development harness. Agent subprocess per phase (context reset) + Build/QA rounds. Config-based skill whitelist enforcement.
-argument-hint: <app description> [--resume] [--no-auto-resume] [--status] [--ref <url-or-image>...]
+argument-hint: <app description> [--resume] [--no-auto-resume] [--status] [--rounds <N>] [--ref <url-or-image>...]
 allowed-tools: [Agent, Read, Write, Edit, Bash, Glob, Grep, WebFetch, WebSearch, TaskCreate, TaskUpdate]
 ---
 
@@ -30,6 +30,7 @@ Parse `$ARGUMENTS` for:
 - `--resume` -> read state.md, continue from pause point
 - `--status` -> invoke harness-status skill, then stop
 - `--no-auto-resume` -> set auto_resume: false for this run
+- `--rounds <N>` -> 각 QA 페이즈별 최대 라운드 수 (기본값: 무제한). config.md의 `max_rounds`에 저장
 - `--ref <url-or-image>` -> reference material (repeatable)
 - Everything else -> treat as the app description
 
@@ -83,6 +84,7 @@ If config.md does not exist, scan for installed skills and present choices per c
 
 ```yaml
 auto_resume: true
+max_rounds: 10           # 각 QA 페이즈별 최대 라운드 수. 0 = 무제한 (PASS까지 반복)
 generator: default
 evaluator: default
 browser_evaluator: browser-qa
@@ -120,6 +122,18 @@ evaluator_skills:
 ```
 
 > **주의**: `generator_skills: []` (빈 배열)로 생성하지 마세요. web 앱이면 반드시 기본 스킬을 포함해야 합니다.
+
+### 4b. Config Validation (MANDATORY)
+
+config.md 생성 직후, 아래 필수 스킬이 `generator_skills`에 포함되어 있는지 검증:
+
+| app_type | 필수 스킬 |
+|----------|-----------|
+| web | `tdd-workflow`, `frontend-design`, `vercel-react-best-practices` |
+| cli | `tdd-workflow` |
+| library | `tdd-workflow` |
+
+**`tdd-workflow`는 모든 app_type에서 필수.** 누락 시 자동으로 추가하고 pipeline-log에 `[AUTO-FIX] tdd-workflow added to generator_skills` 기록.
 
 ### 5. Build Log (docs/harness/build-log.md)
 
@@ -321,7 +335,9 @@ Update state.md: `current_phase: build`. Git commit.
 
 > "Each criterion had a hard threshold, and if any one fell below it, the sprint failed."
 
-Three progressive phases. Each phase has its own PASS criteria. Generator fixes issues between rounds. No round limit — repeat until PASS within each phase.
+Three progressive phases. Each phase has its own PASS criteria. Generator fixes issues between rounds.
+
+**라운드 제한**: `config.max_rounds > 0`이면 각 QA 페이즈에서 해당 횟수만큼만 라운드를 실행. 제한에 도달하면 현재 점수/상태로 다음 페이즈로 강제 진행하고, build-log에 `[MAX_ROUNDS reached]` 기록. `max_rounds: 0`이면 PASS까지 무제한 반복.
 
 ### Phase 5.1: Functional (기능 완성)
 
@@ -342,9 +358,17 @@ LOOP (until Phase 5.1 PASS):
     - Log to build-log.md: round, "Build", duration
 
   ## Handoff Validation (MANDATORY)
-  Read `docs/harness/handoff/round-N-gen.md` → check "Skills Used" section:
+  Read `docs/harness/handoff/round-N-gen.md`:
+
+  **Skills Used 검증:**
   - If generator_skills are configured but Skills Used is empty or says "Built-in only" → **WARN** in pipeline-log and re-dispatch with explicit reminder
   - If Skills Used lists skills that weren't in generator_skills → **WARN** (unauthorized skill)
+
+  **Test Results 검증 (Round 1 필수):**
+  - Read handoff의 "Test Results" 섹션
+  - 테스트 파일 0개 또는 `npm test` 미실행 → **REJECT**: "테스트 러너 설치 + unit test 작성 후 다시 핸드오프하라" 메시지와 함께 re-dispatch
+  - pipeline-log에 `[REJECT] No tests found in Round 1 handoff` 기록
+
   **Log**: complete(generator, round=N, skills from handoff, duration)
 
   ## Functional QA (Evaluator Agent — fresh context)
@@ -364,6 +388,7 @@ LOOP (until Phase 5.1 PASS):
   ## Judgment
   **Log**: judgment(functional, PASS/FAIL, score, reason, next step)
   PASS (zero FAIL criteria + zero stubs) -> Phase 5.2
+  FAIL + max_rounds reached -> Phase 5.2 (강제 진행, build-log에 [MAX_ROUNDS reached] 기록)
   FAIL -> round += 1, Generator fixes, re-test
 ```
 
@@ -391,6 +416,7 @@ LOOP (until Phase 5.2 PASS):
   ## Judgment
   **Log**: judgment(quality, PASS/FAIL, score, reason, next step)
   PASS (design 7+, console error 0, states present) -> Phase 5.3
+  FAIL + max_rounds reached -> Phase 5.3 (강제 진행, build-log에 [MAX_ROUNDS reached] 기록)
   FAIL -> Generator fixes, re-test
 ```
 
@@ -513,6 +539,7 @@ Dispatch Agent Team with 6 teammates:
   **Log**: judgment(comprehensive, PASS/FAIL, details per teammate, next step)
   Read all 6 outputs:
     ALL teammates PASS + Adversarial finds nothing new → Phase 5.3 PASS → Ship
+    ANY teammate FAIL or Adversarial finds issues + max_rounds reached → Ship (강제 진행, build-log에 [MAX_ROUNDS reached] 기록)
     ANY teammate FAIL or Adversarial finds issues → Generator fixes → re-run failed teammates
 
 ## CLI/Library: Single Agent (sequential)
@@ -523,7 +550,7 @@ Dispatch Agent Team with 6 teammates:
     - Output: docs/harness/feedback/round-N-edge.md
 ```
 
-No round limit across all phases. Repeat until PASS within each phase.
+`max_rounds: 0`이면 무제한 반복. `max_rounds > 0`이면 각 페이즈별 해당 횟수에서 강제 진행.
 
 ## Phase 6: Ship
 

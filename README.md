@@ -1,8 +1,12 @@
 # Super Hype Harness
 
-Long-running app development harness for Claude Code. One command takes you from idea to PR.
+**Web-specialized** long-running app development harness for Claude Code. One command takes you from idea to PR.
+
+The Evaluator uses agent-browser and Playwright to screenshot, navigate, and test your app in a real browser — making this plugin optimized for web application development.
 
 **No sprints. No orchestrator.** The Planner creates the spec, the Generator builds everything in one pass, the Evaluator opens a real browser — screenshots, studies, and tests the entire app. Failed? Generator fixes, Evaluator re-tests. Repeat until done. All communication via files.
+
+> **Plan note:** On Claude Max $100/month, you can typically run ~5 rounds (~2 hours) before hitting rate limits. The `--rounds` flag and auto-resume handle this gracefully.
 
 Inspired by [Anthropic's Harness Design for Long-Running Apps](https://www.anthropic.com/engineering/harness-design-long-running-apps).
 
@@ -89,7 +93,7 @@ claude plugins install super-hype-harness@super-hype-harness
 - **File-based handoff** — "one agent writes a file, another reads it"
 - **No sprints** — Generator builds everything, then 3-phase progressive QA
 - **3-phase QA** — Functional (does it work?) → Quality (is it good?) → Edge Cases (can it survive?)
-- **No round limits** — repeat until PASS within each phase
+- **No round limits by default** — repeat until PASS within each phase (`--rounds` to cap)
 - **Contract negotiation** — "the two iterated until they agreed" before any code
 - **Screenshot and study** — Evaluator reads screenshots for visual analysis
 - **Hard thresholds** — stubs = FAIL, console error = FAIL, code review = not evidence
@@ -133,10 +137,10 @@ docs/harness/
 
 ```yaml
 auto_resume: true
+max_rounds: 10            # max rounds per QA phase. 0 = unlimited
 generator: default        # generators/<name>/SKILL.md
 evaluator: default        # evaluators/<name>/SKILL.md
 browser_evaluator: browser-qa
-max_rounds: 5             # max build→QA rounds before shipping
 app_type: web             # web | cli | library
 has_references: false
 

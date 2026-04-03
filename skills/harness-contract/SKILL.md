@@ -102,3 +102,23 @@ Contract에 반드시 다음 기준을 포함해야 합니다:
 2. **핵심 기능 실제 동작**: setTimeout이나 console.log로 시뮬레이션하는 기능 = FAIL
 3. **에러 처리**: 잘못된 입력 시 적절한 에러 메시지 표시
 </HARD-GATE>
+
+<HARD-GATE>
+## Unit Test Criteria (필수)
+
+Contract에 반드시 다음 테스트 기준을 포함해야 합니다:
+
+```markdown
+### T1. 테스트 러너 설치
+- **Test**: `npm test` (또는 동등 명령어) 실행 시 exit code 0
+- **Expected**: 테스트 러너가 설치되어 있고 최소 1개 이상의 테스트가 PASS
+- **Type**: test
+
+### T2. 핵심 로직 Unit Test
+- **Test**: 순수 함수(계산, 판정, 변환, 상태 리듀서 등)에 대한 unit test 존재
+- **Expected**: 앱의 핵심 비즈니스 로직이 unit test로 커버됨
+- **Type**: test
+```
+
+Evaluator는 `npm test` 실행 결과를 증거로 확인합니다.
+</HARD-GATE>
