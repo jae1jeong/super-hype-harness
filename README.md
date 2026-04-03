@@ -132,6 +132,7 @@ docs/harness/
 | `harness-qa` | standalone | Standalone QA outside pipeline |
 | `harness-resume` | internal | Resume from rate limit |
 | `/harness-release` | user-invoked | Version bump + CHANGELOG + tag + push + GitHub Release |
+| `/harness-remove-config` | user-invoked | Delete config.md to regenerate with latest defaults |
 
 ## Configuration
 

@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-04-03
+
+### Added
+- **`--rounds <N>` 파라미터** — 각 QA 페이즈별 최대 라운드 수 조절 (기본 10, 0=무제한). 제한 도달 시 `[MAX_ROUNDS reached]` 기록 후 다음 페이즈로 강제 진행
+- **Config Validation (4b)** — config.md 생성 직후 `tdd-workflow` 등 필수 스킬 존재 검증. 누락 시 자동 추가 + pipeline-log에 `[AUTO-FIX]` 기록
+- **Handoff Test Results 검증** — Round 1 핸드오프에서 테스트 파일 0개면 REJECT + re-dispatch
+- **Contract Unit Test HARD-GATE** — T1(테스트 러너 설치), T2(핵심 로직 unit test) 기준 필수 포함
+- **`/harness-remove-config` 스킬** — 구버전 config.md 삭제. 다음 `/harness` 실행 시 최신 템플릿으로 재생성
+
+### Fixed
+- **Generator Self-Evaluate 테스트 탈출구 제거** — "if they exist" 조건 삭제. 테스트 파일 0개 = FAIL
+- **README.ko.md 최신화** — 3-Phase QA, Agent subprocess, Skills Reference 테이블, screenshots 디렉토리 등 영어 README과 동기화
+
+### Changed
+- README에 웹 특화 플러그인 명시 (agent-browser + Playwright 기반 QA)
+- Claude Max $100/월 플랜 참고사항 추가 (~5라운드/~2시간에서 레이트 리밋)
+- `max_rounds` 기본값: 10
+
 ## [0.8.2] - 2026-04-02
 
 ### Added

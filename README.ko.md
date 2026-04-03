@@ -132,6 +132,7 @@ docs/harness/
 | `harness-qa` | 독립형 | 파이프라인 외 독립 QA |
 | `harness-resume` | 내부 | 레이트 리밋 후 재개 |
 | `/harness-release` | 사용자 호출 | 버전 범프 + CHANGELOG + 태그 + 푸시 + GitHub Release |
+| `/harness-remove-config` | 사용자 호출 | 구버전 config.md 삭제, 다음 실행 시 최신 기본값으로 재생성 |
 
 ## 설정
 
